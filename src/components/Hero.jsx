@@ -1,0 +1,68 @@
+import { ArrowRight, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { HashLink as Link } from "react-router-hash-link"; 
+
+
+export default function Hero() {
+  return (
+    <section className="relative overflow-hidden bg-background pt-32 pb-24 sm:pt-40 sm:pb-32" id="Hero">
+      {/* Premium Ambient Background Glows */}
+      <div className="absolute inset-0 -z-10 flex items-center justify-center opacity-30 blur-[120px] dark:opacity-20">
+        <div className="aspect-square w-[500px] rounded-full bg-gradient-to-tr from-blue-600 to-purple-500" />
+      </div>
+
+      <div className="mx-auto max-w-5xl px-6 text-center lg:px-8">
+        {/* Animated Badge Feature */}
+        <div className="mx-auto mb-6 flex max-w-fit items-center gap-2 rounded-full border border-border bg-muted/60 px-4 py-1.5 backdrop-blur-sm">
+          <Sparkles className="h-4 w-4 text-blue-500" />
+          <span className="text-xs font-medium text-muted-foreground tracking-wide">
+            Introducing Team Collable v2.0
+          </span>
+        </div>
+
+        {/* Strong Meaningful Heading */}
+        <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-6xl lg:text-7xl !leading-[1.15]">
+          Where remote teams <br />
+          <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
+            build things together.
+          </span>
+        </h1>
+
+        {/* Clear, High-Value Subtitle */}
+        <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-xl">
+          Collaborate seamlessly in real-time. Manage workspaces, write documentation, 
+          and deploy your software pipelines without structural friction—all from a single dashboard.
+        </p>
+
+        {/* Responsive Dual Action Call To Buttons */}
+        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <Link 
+            to="/signin"
+            >
+          <Button size="lg" className="h-12 w-full px-6 text-sm font-medium sm:w-auto gap-2 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600">
+            Get Started Free
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          </Link>
+          
+          <Button size="lg" variant="outline" className="h-12 w-full px-6 text-sm font-medium sm:w-auto">
+            <Link
+              to="#HowItWorks"
+              smooth
+              >
+              See how it works
+            </Link>
+            
+          </Button>
+        </div>
+
+        {/* Subtle Bottom Trust Metadata */}
+        <div className="mt-16 border-t border-border/60 pt-8">
+          <p className="text-xs font-semibold tracking-wider text-muted-foreground/60 uppercase">
+            Trusted by modern product developers worldwide
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
