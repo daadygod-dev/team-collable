@@ -21,9 +21,9 @@ export default function Hero() {
         </div>
 
         {/* Strong Meaningful Heading */}
-        <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-6xl lg:text-7xl !leading-[1.15]">
+        <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-6xl lg:text-7xl leading-[1.15]">
           Where remote teams <br />
-          <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
             build things together.
           </span>
         </h1>
@@ -37,15 +37,16 @@ export default function Hero() {
         {/* Responsive Dual Action Call To Buttons */}
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link 
-            to="/signin"
+            to="/signup"
+             className=""
             >
-          <Button size="lg" className="h-12 w-full px-6 text-sm font-medium sm:w-auto gap-2 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600">
+          <Button size="lg" className="h-12 w-full px-6 text-sm font-medium sm:w-auto gap-2 bg-linear-to-r from-blue-600 via-indigo-500 to-purple-600 cursor-pointer">
             Get Started Free
             <ArrowRight className="h-4 w-4" />
           </Button>
           </Link>
           
-          <Button size="lg" variant="outline" className="h-12 w-full px-6 text-sm font-medium sm:w-auto">
+          <Button size="lg" variant="outline" className="h-12 w-full px-6 text-sm font-medium sm:w-auto cursor-pointer">
             <Link
               to="#HowItWorks"
               smooth

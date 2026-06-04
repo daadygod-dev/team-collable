@@ -1,0 +1,35 @@
+```
+└── 📁src
+    └── 📁assets
+        ├── hero.png
+        ├── react.svg
+        ├── vite.svg
+    └── 📁components
+        └── 📁ui
+            ├── button.jsx
+            ├── card.jsx
+            ├── field.jsx
+            ├── input.jsx
+            ├── label.jsx
+            ├── separator.jsx
+        ├── Features.jsx
+        ├── Footer.jsx
+        ├── Hero.jsx
+        ├── HowItWorks.jsx
+        ├── Navbar.jsx
+        ├── Signin.jsx
+        ├── Signup.jsx
+        ├── Support.jsx
+    └── 📁context
+        ├── AuthContext.jsx
+        ├── NotificationContext.jsx
+        ├── ProjectContext.jsx
+        ├── TaskContext.jsx
+        ├── TeamContext.jsx
+    └── 📁lib
+        ├── utils.js
+    ├── App.css
+    ├── App.jsx
+    ├── index.css
+    └── main.jsx
+```

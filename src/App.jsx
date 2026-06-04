@@ -15,7 +15,7 @@ function App() {
       <Navbar />
       <main>
         <Hero />
-        <Features />)
+        <Features />
         <HowItWorks />
         <Support />
       </main>

@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Menu, X, ArrowRight } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
 import { HashLink } from "react-router-hash-link"; 
-// FIX 2: Imported native Link provider from router-dom for clean page redirection transitions
 import { Link as RouterLink } from "react-router-dom"; 
 
 export default function Navbar() {
@@ -22,8 +21,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 gap-1">
           
           {/* Logo Section */}
-          <div className="flex-shrink-0 flex items-center gap-2">
-            <img src="/logo.png" width={40} height={40} alt="Logo" className="object-contain" />
+          <div className="hrink-0 flex items-center gap-0.5">
+            <img src="/logo.png" width={40} height={40} alt="Logo" className="object-contain my-auto" />
             <span className="text-md font-extrabold tracking-tight text-foreground">
               Team<span className="text-blue-600">Collable</span>
             </span>
@@ -45,8 +44,13 @@ export default function Navbar() {
 
           {/* Desktop Call to Action Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost" size="sm">Sign In</Button>
-            <Button size="sm">Get Started</Button>
+            <RouterLink to="/signin" onClick={() => setIsOpen(false)}>
+            <Button variant="ghost" size="sm" className="cursor-pointer">Sign In</Button>
+            </RouterLink>
+            <RouterLink to="/signup" onClick={() => setIsOpen(false)}>
+            <Button size="sm" className="bg-linear-to-r from-blue-600 cursor-pointer via-indigo-500 to-purple-600 text-white ">Get Started</Button>
+            </RouterLink>
+            
           </div>
 
           {/* Mobile Hamburguer Toggle Button */}
@@ -84,7 +88,7 @@ export default function Navbar() {
             
             {/* Safe standard client router routing redirect block */}
             <RouterLink to="/signup" onClick={() => setIsOpen(false)}>
-              <Button size="lg" className="h-12 w-full px-6 text-sm font-medium gap-2 bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 text-white border-0">
+              <Button size="lg" className="h-12 w-full px-6 text-sm font-medium gap-2 bg-linear-to-r from-blue-600 via-indigo-500 to-purple-600 text-white border-0">
                 Get Started Free
                 <ArrowRight className="h-4 w-4" />
               </Button>
