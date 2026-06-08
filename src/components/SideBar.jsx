@@ -15,9 +15,10 @@ import { Button } from "./ui/button";
 
 const LinkMenu = [
     { id: 1, title: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
-    { id: 2, title: "Tasks", href: "/dashboard/tasks", icon: <LayoutList size={20} /> },
-    { id: 3, title: "Projects", href: "/dashboard/projects", icon: <SquareMousePointer size={20} /> },
-    { id: 4, title: "Teams", href: "/dashboard/teams", icon: <UserRound size={20} /> },
+    { id: 2, title: "Projects", href: "/dashboard/projects", icon: <SquareMousePointer size={20} /> },
+    { id: 3, title: "Tasks", href: "/dashboard/tasks", icon: <LayoutList size={20} /> },
+    
+    { id: 4, title: "Members", href: "/dashboard/teams", icon: <UserRound size={20} /> },
     { id: 5, title: "Calendar", href: "/dashboard/calendar", icon: <Calendar size={20} /> }
 ];
 
@@ -66,7 +67,7 @@ export default function SideBar() {
                                 className={`
                                     flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors group relative font-semibold
                                     ${isActive 
-                                        ? "bg-none text-primary" 
+                                        ? "bg-none text-green-800" 
                                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                                     }
                                     ${isCollapsed ? "justify-center" : ""}

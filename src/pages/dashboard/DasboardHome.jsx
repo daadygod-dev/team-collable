@@ -2,6 +2,9 @@ import React from "react"
 import { Card, CardContent, CardTitle, CardAction, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowUpRight, ChevronsUpDown, CloudDownload, Icon, Plus } from "lucide-react"
+import { useTasks } from "@/context/TaskContext"
+import { useTeams } from "@/context/TeamContext"
+import { useProjects } from "@/context/ProjectContext"
 
 
 

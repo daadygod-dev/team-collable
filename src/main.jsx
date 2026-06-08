@@ -14,12 +14,15 @@ import App from './App.jsx'
 import ProtectedRoute from './components/ProtectedRoute'
 import { ProjectProvider } from './context/ProjectContext'
 import { TaskProvider } from './context/TaskContext'
+import { TeamProvider } from './context/TeamContext'
+import CalendarPage from './pages/dashboard/CalendarPage'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <ProjectProvider>
         <TaskProvider>
+          <TeamProvider>
       <BrowserRouter>
         <Routes>
           <Route path='/' element={<App />} />
@@ -39,11 +42,13 @@ createRoot(document.getElementById('root')).render(
             <Route path='tasks' element={<TaskPage />} />      {/* /dashboard/tasks */}
             <Route path='projects' element={<ProjectPage />} /> {/* /dashboard/project */}
             <Route path='teams' element={<TeamPage />} />       {/* /dashboard/team */}
+            <Route path='calendar' element={<CalendarPage />} /> 
           </Route>
 
           <Route path='*' element={<Navigate to='/' replace />} />
         </Routes>
       </BrowserRouter>
+      </TeamProvider>
       </TaskProvider>
       </ProjectProvider>
     </AuthProvider>

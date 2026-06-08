@@ -4,6 +4,9 @@ import SideBar from "@/components/SideBar";
 import { Input } from "@/components/ui/input";
 import { Bell, Search, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage,AvatarFallback } from "@/components/ui/avatar";
+
+
 import { useAuth } from "@/context/AuthContext";
 export default function DashboardLayout() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -62,28 +65,36 @@ export default function DashboardLayout() {
           </div>
 
           {/* Notifications and profile */}
-          <div className="flex items-center gap-5">
-            <button  className="rounded-full bg-transparent h-6 w-6">
-              <Bell size={25} />
+          <div className="flex items-center gap-3">
+            <button className="rounded-full bg-transparent h-6 w-6">
+              <Bell size={24} />
             </button>
             <div className="flex gap-2">
               <div className="my-auto">
-                <img src="/avatar.jpg" alt="avatar" className="w-8 h-8 rounded-full" />
+
               </div>
               <div className="text-xs text-neutral-600">
-                <p className="font-black text-sm">
-                 
+                <Button variant="outline" className={"px-2 rounded-full py-3"}>
+                  <Avatar>
+                    <AvatarImage
+                      src="/avatar.jpg"
+                      
+                      alt="@shadcn"
+                      className="grayscale"
+                    />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
+                  <p className="font-normal text-sm">
+
                     {
                       user.fullname
                     }
-                    </p>
-                
-                  <p className="text-neutral-400">
-                    {
-                      user.email
-                    }
                   </p>
-               
+
+
+                </Button>
+
+
 
               </div>
 
