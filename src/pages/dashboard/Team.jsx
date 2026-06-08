@@ -57,6 +57,7 @@ import {
   Shield,
   LogOut,
   UserMinus,
+  AlertCircle
 } from "lucide-react";
 
 const roleStyles = {
@@ -105,10 +106,12 @@ export default function TeamPage() {
   const [editError, setEditError] = useState("");
 
   // ── Manage Members Dialog State ────────────────────────────
-  // FIX: Store only the ID so we can derive the live team object directly from context
-  const [manageTeamId, setManageTeamId] = useState(null);
-  const [inviteUserId, setInviteUserId] = useState("");
-  const [inviteRole, setInviteRole] = useState("member");
+ // ── Manage Members Dialog State ────────────────────────────
+const [manageTeamId, setManageTeamId] = useState(null);
+const [inviteEmail, setInviteEmail] = useState("");   // ✅ email input instead of dropdown
+const [inviteRole, setInviteRole] = useState("member");
+const [inviteError, setInviteError] = useState("");
+const [invitedUser, setInvitedUser] = useState("");
 
   // ── Confirm Action Dialog State ────────────────────────────
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -185,29 +188,25 @@ export default function TeamPage() {
     setInviteRole("member");
   };
 
-  const handleInvite = () => {
+ // ── handleInvite — use email directly ─────────────────────
+const handleInvite = () => {
     try {
-      if (!inviteUserId) {
-        toast.error("Please select a user to invite.");
-        return;
-      }
-      const targetUser = nonMembers.find((u) => u.id === inviteUserId);
-      if (!targetUser) {
-        toast.error("User not found.");
-        return;
-      }
-
-      // Pass the exact object properties expected by the context's inviteMember
-      inviteMember(manageTeam.id, { id: targetUser.id, email: targetUser.email, role: inviteRole });
-      toast.success(`${targetUser.fullname} added successfully!`);
-      
-      // Reset selection
-      setInviteUserId(""); 
-      setInviteRole("member");
+        if (!inviteEmail.trim()) {
+            setInviteError("Please enter an email address.");
+            return;
+        }
+        inviteMember(manageTeam.id, {
+            email: inviteEmail.trim(),
+            role: inviteRole,
+        });
+        toast.success(`Member added successfully!`);
+        setInviteEmail("");
+        setInviteRole("member");
+        setInviteError("");
     } catch (err) {
-      toast.error(err.message);
+        setInviteError(err.message);   // shows "no account found" or "already a member"
     }
-  };
+};
 
   const handleRemoveMember = (teamId, userId, name) => {
     try {
@@ -620,75 +619,57 @@ export default function TeamPage() {
 
           <div className="flex flex-col gap-6 py-4">
             {/* Invite Section - Only visible to Owner/Admin */}
-            {isOwnerInManagedTeam && (
-              <div className="flex flex-col gap-3 p-3 border rounded-xl bg-muted/40">
-                <Label className="text-sm font-semibold flex items-center gap-2">
-                  <UserPlus size={14} /> Add New Member
-                </Label>
+           
+{isOwnerInManagedTeam && (
+    <div className="flex flex-col gap-3 p-3 border rounded-xl bg-muted/40">
+        <Label className="text-sm font-semibold flex items-center gap-2">
+            <UserPlus size={14} /> Add New Member
+        </Label>
 
-                {nonMembers.length > 0 ? (
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground">
-                        Select User
-                      </Label>
-                      <Select
-                        value={inviteUserId}
-                        onValueChange={setInviteUserId}
-                      >
-                        <SelectTrigger className="mt-1 cursor-pointer">
-                          <SelectValue placeholder="Choose a user..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {nonMembers.map((u) => (
-                            <SelectItem
-                              key={u.id}
-                              value={u.id}
-                              className="cursor-pointer"
-                            >
-                              {u.fullname} ({u.email})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="w-32">
-                      <Label className="text-xs text-muted-foreground">
-                        Role
-                      </Label>
-                      <Select value={inviteRole} onValueChange={setInviteRole}>
-                        <SelectTrigger className="mt-1 cursor-pointer">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem
-                            value="member"
-                            className="cursor-pointer"
-                          >
-                            Member
-                          </SelectItem>
-                          <SelectItem value="admin" className="cursor-pointer">
-                            Admin
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button
-                      onClick={handleInvite}
-                      disabled={!inviteUserId}
-                      className="bg-linear-to-b from-[#14532d] to-[#064e3b] capitalize"
-                    >
-                      Add
-                    </Button>
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    All registered users are already in this team, or no other
-                    users exist in the system.
-                  </p>
-                )}
-              </div>
+        <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+                {/* ✅ Email input instead of dropdown */}
+                <Input
+                    placeholder="Enter member's email address"
+                    value={inviteEmail}
+                    onChange={(e) => {
+                        setInviteEmail(e.target.value);
+                        setInviteError("");
+                    }}
+                    className="flex-1"
+                />
+                <Select value={inviteRole} onValueChange={setInviteRole}>
+                    <SelectTrigger className="w-28 cursor-pointer">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="member">Member</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button
+                    onClick={handleInvite}
+                    disabled={!inviteEmail.trim()}
+                    className="bg-linear-to-b from-[#14532d] to-[#064e3b] capitalize"
+                >
+                    Add
+                </Button>
+            </div>
+
+            {/* Inline error — shows why invite failed */}
+            {inviteError && (
+                <p className="text-xs text-destructive flex items-center gap-1.5">
+                    <AlertCircle size={12} />
+                    {inviteError}
+                </p>
             )}
+
+            <p className="text-xs text-muted-foreground">
+                The person must have an account to be added.
+            </p>
+        </div>
+    </div>
+)}
 
             {/* Current Members List */}
             <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">

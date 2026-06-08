@@ -1,29 +1,152 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { useAuth } from "./AuthContext";
 
 const TeamContext = createContext();
 
+function safeGetFromStorage(key, defaultValue = []) {
+    try {
+        const item = localStorage.getItem(key);
+        if (item === null) return defaultValue;
+        const parsed = JSON.parse(item);
+        return Array.isArray(parsed) ? parsed : defaultValue;
+    } catch (error) {
+        console.error(`Failed to parse ${key}:`, error);
+        return defaultValue;
+    }
+}
+
+function safeSetToStorage(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.error(`Failed to save ${key}:`, error);
+    }
+}
+
+function syncMemberToProjects(teamId, newMember) {
+    try {
+        const projects = safeGetFromStorage("projects_db", []);
+        const teamProjects = projects.filter((p) => p.teamId === teamId);
+        if (teamProjects.length === 0) return;
+
+        const updatedProjects = projects.map((project) => {
+            if (project.teamId !== teamId) return project;
+            const alreadyMember = project.members.some(
+                (m) => m.userId === newMember.userId
+            );
+            if (alreadyMember) return project;
+
+            return {
+                ...project,
+                members: [
+                    ...project.members,
+                    {
+                        userId: newMember.userId,
+                        fullname: newMember.fullname,
+                        email: newMember.email,
+                        role: newMember.role || "member",
+                        joinedAt: new Date().toISOString(),
+                    },
+                ],
+                updatedAt: new Date().toISOString(),
+            };
+        });
+
+        safeSetToStorage("projects_db", updatedProjects);
+    } catch (error) {
+        console.error("Failed to sync member to projects:", error);
+    }
+}
+
+function removeMemberFromProjects(teamId, targetUserId) {
+    try {
+        const projects = safeGetFromStorage("projects_db", []);
+        const updatedProjects = projects.map((project) => {
+            if (project.teamId !== teamId) return project;
+            return {
+                ...project,
+                members: project.members.filter((m) => m.userId !== targetUserId),
+                updatedAt: new Date().toISOString(),
+            };
+        });
+        safeSetToStorage("projects_db", updatedProjects);
+    } catch (error) {
+        console.error("Failed to remove member from projects:", error);
+    }
+}
+
+function updateMemberRoleInProjects(teamId, targetUserId, newRole) {
+    try {
+        const projects = safeGetFromStorage("projects_db", []);
+        const updatedProjects = projects.map((project) => {
+            if (project.teamId !== teamId) return project;
+            return {
+                ...project,
+                members: project.members.map((m) =>
+                    m.userId === targetUserId ? { ...m, role: newRole } : m
+                ),
+                updatedAt: new Date().toISOString(),
+            };
+        });
+        safeSetToStorage("projects_db", updatedProjects);
+    } catch (error) {
+        console.error("Failed to update member role in projects:", error);
+    }
+}
+
 export function TeamProvider({ children }) {
     const { user } = useAuth();
     const [teams, setTeams] = useState([]);
+    const isLoaded = useRef(false);  // ✅ FIX: Track if initial load is done
 
-    // ── Persist ───────────────────────────────────────────────
+    // Load from localStorage on mount
     useEffect(() => {
-        const stored = JSON.parse(localStorage.getItem("teams_db")) || [];
+        const stored = safeGetFromStorage("teams_db", []);
         setTeams(stored);
+        isLoaded.current = true;  // ✅ Mark as loaded AFTER setting state
     }, []);
 
+    // Save to localStorage ONLY after initial load
     useEffect(() => {
-        localStorage.setItem("teams_db", JSON.stringify(teams));
+        if (!isLoaded.current) return;  // ✅ Skip save on initial render
+        safeSetToStorage("teams_db", teams);
     }, [teams]);
 
-    // ── CREATE ────────────────────────────────────────────────
+    const getTeamById = (teamId) => {
+        return teams.find((t) => t.id === teamId) || null;
+    };
+
+    const getMemberRole = (teamId) => {
+        const team = getTeamById(teamId);
+        return team?.members.find((m) => m.userId === user?.id) || null;
+    };
+
+    const hasRole = (teamId, ...roles) => {
+        const member = getMemberRole(teamId);
+        return roles.includes(member?.role);
+    };
+
+    const getMyTeams = () => {
+        return teams.filter((t) => t.members.some((m) => m.userId === user?.id));
+    };
+
+    const getAllUsers = () => {
+        const raw = safeGetFromStorage("users_db", []);
+        return raw.map(({ password: _, ...u }) => u);
+    };
+
+    const getNonMembers = (teamId) => {
+        const team = getTeamById(teamId);
+        if (!team) return [];
+        const memberIds = new Set(team.members.map((m) => m.userId));
+        return getAllUsers().filter((u) => !memberIds.has(u.id));
+    };
+
     const createTeam = ({ name, description }) => {
         if (!user) throw new Error("You must be logged in to create a team.");
         if (!name?.trim()) throw new Error("Team name is required.");
 
-        const allTeams = JSON.parse(localStorage.getItem("teams_db")) || [];
-        const nameExists = allTeams.some(
+        const nameExists = teams.some(
             (t) => t.name.toLowerCase() === name.trim().toLowerCase()
         );
         if (nameExists) throw new Error(`A team named "${name}" already exists.`);
@@ -40,7 +163,7 @@ export function TeamProvider({ children }) {
                     userId: user.id,
                     fullname: user.fullname,
                     email: user.email,
-                    role: "owner",          // ✅ creator is always owner
+                    role: "owner",
                     joinedAt: new Date().toISOString(),
                 },
             ],
@@ -50,11 +173,21 @@ export function TeamProvider({ children }) {
         return newTeam;
     };
 
-    // ── UPDATE ────────────────────────────────────────────────
     const updateTeam = (teamId, updates) => {
         const role = getMemberRole(teamId)?.role;
         if (!["owner", "admin"].includes(role)) {
             throw new Error("Only owners and admins can update this team.");
+        }
+
+        if (updates.name) {
+            const nameExists = teams.some(
+                (t) =>
+                    t.id !== teamId &&
+                    t.name.toLowerCase() === updates.name.trim().toLowerCase()
+            );
+            if (nameExists) {
+                throw new Error(`A team named "${updates.name}" already exists.`);
+            }
         }
 
         setTeams((prev) =>
@@ -66,19 +199,24 @@ export function TeamProvider({ children }) {
         );
     };
 
-    // ── DELETE ────────────────────────────────────────────────
     const deleteTeam = (teamId) => {
         const role = getMemberRole(teamId)?.role;
         if (role !== "owner") {
             throw new Error("Only the owner can delete this team.");
         }
 
+        const projects = safeGetFromStorage("projects_db", []);
+        const updatedProjects = projects.map((p) => {
+            if (p.teamId === teamId) {
+                return { ...p, teamId: null };
+            }
+            return p;
+        });
+        safeSetToStorage("projects_db", updatedProjects);
+
         setTeams((prev) => prev.filter((t) => t.id !== teamId));
     };
 
-    // ── MEMBERS ───────────────────────────────────────────────
-
-    // Invite a user to a team by email (owner/admin only)
     const inviteMember = (teamId, targetUser) => {
         const role = getMemberRole(teamId)?.role;
         if (!["owner", "admin"].includes(role)) {
@@ -93,20 +231,19 @@ export function TeamProvider({ children }) {
         );
         if (alreadyMember) throw new Error("This user is already a team member.");
 
-        // Look up user from users_db by email
-        const allUsers = JSON.parse(localStorage.getItem("users_db")) || [];
-        const foundUser = allUsers.find((u) => u.email === targetUser.email);
+        const allUsers = getAllUsers();
+        const foundUser = allUsers.find(
+            (u) => u.id === targetUser.id || u.email === targetUser.email
+        );
         if (!foundUser) {
-            throw new Error(
-                `No account found with email "${targetUser.email}". They must sign up first.`
-            );
+            throw new Error("No account found for this user. They must sign up first.");
         }
 
         const newMember = {
             userId: foundUser.id,
             fullname: foundUser.fullname,
             email: foundUser.email,
-            role: targetUser.role || "member",  // default member
+            role: targetUser.role || "member",
             joinedAt: new Date().toISOString(),
         };
 
@@ -114,27 +251,27 @@ export function TeamProvider({ children }) {
             prev.map((t) =>
                 t.id === teamId
                     ? {
-                          ...t,
-                          members: [...t.members, newMember],
-                          updatedAt: new Date().toISOString(),
+                        ...t,
+                        members: [...t.members, newMember],
+                        updatedAt: new Date().toISOString(),
                       }
                     : t
             )
         );
 
+        syncMemberToProjects(teamId, newMember);
         return newMember;
     };
 
-    // Remove a member (owner can remove anyone, admin can remove members only)
     const removeMember = (teamId, targetUserId) => {
         const currentRole = getMemberRole(teamId)?.role;
         const team = getTeamById(teamId);
         const targetMember = team?.members.find((m) => m.userId === targetUserId);
 
         if (!currentRole) throw new Error("You are not a member of this team.");
-        if (!targetMember) throw new Error("Target user is not in this team.");
+        if (!targetMember) throw new Error("User is not in this team.");
         if (targetMember.role === "owner") throw new Error("The owner cannot be removed.");
-        if (targetUserId === user.id) throw new Error("You cannot remove yourself.");
+        if (targetUserId === user.id) throw new Error("You cannot remove yourself. Use Leave Team.");
         if (currentRole === "admin" && targetMember.role === "admin") {
             throw new Error("Admins cannot remove other admins.");
         }
@@ -146,16 +283,17 @@ export function TeamProvider({ children }) {
             prev.map((t) =>
                 t.id === teamId
                     ? {
-                          ...t,
-                          members: t.members.filter((m) => m.userId !== targetUserId),
-                          updatedAt: new Date().toISOString(),
+                        ...t,
+                        members: t.members.filter((m) => m.userId !== targetUserId),
+                        updatedAt: new Date().toISOString(),
                       }
                     : t
             )
         );
+
+        removeMemberFromProjects(teamId, targetUserId);
     };
 
-    // Update a member's role (owner only)
     const updateMemberRole = (teamId, targetUserId, newRole) => {
         const currentRole = getMemberRole(teamId)?.role;
         if (currentRole !== "owner") {
@@ -174,41 +312,41 @@ export function TeamProvider({ children }) {
             prev.map((t) =>
                 t.id === teamId
                     ? {
-                          ...t,
-                          members: t.members.map((m) =>
-                              m.userId === targetUserId ? { ...m, role: newRole } : m
-                          ),
-                          updatedAt: new Date().toISOString(),
+                        ...t,
+                        members: t.members.map((m) =>
+                            m.userId === targetUserId ? { ...m, role: newRole } : m
+                        ),
+                        updatedAt: new Date().toISOString(),
                       }
                     : t
             )
         );
+
+        updateMemberRoleInProjects(teamId, targetUserId, newRole);
     };
 
-    // Leave a team (any member except owner)
     const leaveTeam = (teamId) => {
         const member = getMemberRole(teamId);
         if (!member) throw new Error("You are not a member of this team.");
         if (member.role === "owner") {
-            throw new Error(
-                "Owners cannot leave their team. Transfer ownership or delete the team."
-            );
+            throw new Error("Owners cannot leave. Transfer ownership or delete the team first.");
         }
 
         setTeams((prev) =>
             prev.map((t) =>
                 t.id === teamId
                     ? {
-                          ...t,
-                          members: t.members.filter((m) => m.userId !== user.id),
-                          updatedAt: new Date().toISOString(),
+                        ...t,
+                        members: t.members.filter((m) => m.userId !== user.id),
+                        updatedAt: new Date().toISOString(),
                       }
                     : t
             )
         );
+
+        removeMemberFromProjects(teamId, user.id);
     };
 
-    // Transfer ownership to another member (owner only)
     const transferOwnership = (teamId, targetUserId) => {
         const currentRole = getMemberRole(teamId)?.role;
         if (currentRole !== "owner") {
@@ -218,60 +356,32 @@ export function TeamProvider({ children }) {
             throw new Error("You are already the owner.");
         }
 
+        const team = getTeamById(teamId);
+        const targetExists = team?.members.some((m) => m.userId === targetUserId);
+        if (!targetExists) throw new Error("Target user is not a member of this team.");
+
         setTeams((prev) =>
             prev.map((t) =>
                 t.id === teamId
                     ? {
-                          ...t,
-                          members: t.members.map((m) => {
-                              if (m.userId === user.id) return { ...m, role: "admin" }; // demote current owner to admin
-                              if (m.userId === targetUserId) return { ...m, role: "owner" }; // promote target
-                              return m;
-                          }),
-                          updatedAt: new Date().toISOString(),
+                        ...t,
+                        members: t.members.map((m) => {
+                            if (m.userId === user.id) return { ...m, role: "admin" };
+                            if (m.userId === targetUserId) return { ...m, role: "owner" };
+                            return m;
+                        }),
+                        updatedAt: new Date().toISOString(),
                       }
                     : t
             )
         );
+
+        updateMemberRoleInProjects(teamId, user.id, "admin");
+        updateMemberRoleInProjects(teamId, targetUserId, "owner");
     };
 
-    // ── HELPERS ───────────────────────────────────────────────
-
-    // All teams current user belongs to
-    const getMyTeams = () => {
-        return teams.filter((t) =>
-            t.members.some((m) => m.userId === user?.id)
-        );
-    };
-
-    // Single team by id
-    const getTeamById = (teamId) => {
-        return teams.find((t) => t.id === teamId) || null;
-    };
-
-    // Current user's membership object in a team
-    const getMemberRole = (teamId) => {
-        const team = getTeamById(teamId);
-        return team?.members.find((m) => m.userId === user?.id) || null;
-    };
-
-    // Check if current user has one of the given roles
-    const hasRole = (teamId, ...roles) => {
-        const member = getMemberRole(teamId);
-        return roles.includes(member?.role);
-    };
-
-    // Get all registered users (for invite lookup)
-    const getAllUsers = () => {
-        return JSON.parse(localStorage.getItem("users_db")) || [];
-    };
-
-    // Get users not yet in a team (for invite suggestions)
-    const getNonMembers = (teamId) => {
-        const team = getTeamById(teamId);
-        if (!team) return [];
-        const memberIds = new Set(team.members.map((m) => m.userId));
-        return getAllUsers().filter((u) => !memberIds.has(u.id));
+    const getTeamMembers = (teamId) => {
+        return getTeamById(teamId)?.members || [];
     };
 
     return (
@@ -288,6 +398,7 @@ export function TeamProvider({ children }) {
                 transferOwnership,
                 getMyTeams,
                 getTeamById,
+                getTeamMembers,
                 getMemberRole,
                 hasRole,
                 getAllUsers,

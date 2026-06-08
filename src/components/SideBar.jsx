@@ -7,7 +7,7 @@ import {
     Settings, 
     SquareMousePointer, 
     UserRound, 
-    Calendar, // Fixed the naming convention from Calendar-1
+    Calendar,
     ChevronLeft, 
     ChevronRight 
 } from "lucide-react";
@@ -17,7 +17,6 @@ const LinkMenu = [
     { id: 1, title: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
     { id: 2, title: "Projects", href: "/dashboard/projects", icon: <SquareMousePointer size={20} /> },
     { id: 3, title: "Tasks", href: "/dashboard/tasks", icon: <LayoutList size={20} /> },
-    
     { id: 4, title: "Members", href: "/dashboard/teams", icon: <UserRound size={20} /> },
     { id: 5, title: "Calendar", href: "/dashboard/calendar", icon: <Calendar size={20} /> }
 ];
@@ -29,16 +28,17 @@ const General = [
 
 export default function SideBar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const location = useLocation(); // Used to highlight the active menu item dynamically
+    const location = useLocation();
 
     return (
         <aside 
             className={`
-                self-start  h-[calc(100vh-2rem)] my-4 mx-3 bg-card border border-border rounded-xl flex flex-col justify-between p-3 relative transition-all duration-300 ease-in-out shadow-sm
+                hidden lg:flex  // ✅ Hide on mobile, show on lg+
+                self-start h-[calc(100vh-2rem)] my-4 mx-3 bg-card border border-border rounded-xl flex-col justify-between p-3 relative transition-all duration-300 ease-in-out shadow-sm
                 ${isCollapsed ? "w-20" : "w-64"}
             `}
         >
-            {/* Collapse Toggle Trigger Button */}
+            {/* Collapse Toggle */}
             <Button
                 variant="outline"
                 size="icon"
@@ -48,15 +48,15 @@ export default function SideBar() {
                 {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </Button>
 
-            {/* Top Navigation Options */}
+            {/* Top Navigation */}
             <div className="flex flex-col gap-6">
-                {/* Application Branding Header Header */}
-                <div className={`flex items-center gap-3 px-2 h-15  ${isCollapsed ? "justify-center" : ""}`}>
+                {/* Logo */}
+                <div className={`flex items-center gap-3 px-2 h-15 ${isCollapsed ? "justify-center" : ""}`}>
                     <img src="/logo.png" alt="Logo" width={32} height={32} className="min-w-[32px]" />
                     {!isCollapsed && <span className="font-bold text-lg tracking-tight truncate">Workspace</span>}
                 </div>
 
-                {/* Primary Menu Links Loop */}
+                {/* Primary Menu */}
                 <nav className="flex flex-col gap-1">
                     {LinkMenu.map((item) => {
                         const isActive = location.pathname === item.href;
@@ -78,7 +78,6 @@ export default function SideBar() {
                                 </span>
                                 {!isCollapsed && <span className="truncate">{item.title}</span>}
                                 
-                                {/* Tooltip when Sidebar is collapsed */}
                                 {isCollapsed && (
                                     <div className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs font-semibold rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md border z-50 whitespace-nowrap">
                                         {item.title}
@@ -90,7 +89,7 @@ export default function SideBar() {
                 </nav>
             </div>
 
-            {/* General Utilities & Footer Section */}
+            {/* General Utilities */}
             <div className="flex flex-col gap-1 border-t pt-4 border-border">
                 {General.map((item) => {
                     const isActive = location.pathname === item.href;
@@ -116,7 +115,7 @@ export default function SideBar() {
                                 <div className="absolute left-full ml-4 px-2 py-1 bg-popover text-popover-foreground text-xs font-semibold rounded-sm opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 shadow-md border z-50 whitespace-nowrap">
                                     {item.title}
                                 </div>
-                              )}
+                            )}
                         </Link>
                     );
                 })}

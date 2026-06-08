@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectContext";
 import { useTasks } from "@/context/TaskContext";
+import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -37,16 +38,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Plus,
   ClipboardList,
   MoreHorizontal,
   Trash2,
   ArrowRight,
-  AlertCircle,
   CalendarDays,
   User,
+  CalendarIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 // ── Style maps ────────────────────────────────────────────
@@ -71,6 +79,13 @@ const statusLabel = {
 const nextStatus = {
   todo: "in-progress",
   "in-progress": "done",
+};
+
+// ✅ Get today's date at midnight (for disabling past dates)
+const getToday = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
 };
 
 export default function TaskPage() {
@@ -112,10 +127,11 @@ export default function TaskPage() {
 
   // ── Create dialog ─────────────────────────────────────
   const [createOpen, setCreateOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [form, setForm] = useState({
     title: "",
     description: "",
-    dueDate: "",
+    dueDate: null,  // ✅ Changed to Date object (null instead of "")
     priority: "medium",
     assignedToUserId: "",
   });
@@ -125,17 +141,27 @@ export default function TaskPage() {
 
   const openCreate = () => {
     if (!selectedProjectId) return toast.error("Select a project first.");
-    if (!isLeader)
-      return toast.error("Only owners and admins can create tasks.");
     setForm({
       title: "",
       description: "",
-      dueDate: "",
+      dueDate: null,
       priority: "medium",
       assignedToUserId: members[0]?.userId || "",
     });
     setFormError("");
+    setCalendarOpen(false);
     setCreateOpen(true);
+  };
+
+  // ✅ Handle date selection
+  const handleDateSelect = (date) => {
+    setForm((prev) => ({ ...prev, dueDate: date }));
+    setCalendarOpen(false);
+  };
+
+  // ✅ Clear date
+  const clearDate = () => {
+    setForm((prev) => ({ ...prev, dueDate: null }));
   };
 
   const handleCreate = () => {
@@ -148,7 +174,27 @@ export default function TaskPage() {
         setFormError("Please assign this task to a member.");
         return;
       }
-      createTask({ projectId: selectedProjectId, ...form });
+
+      // ✅ Validate due date is not in the past
+      if (form.dueDate) {
+        const today = getToday();
+        if (form.dueDate < today) {
+          setFormError("Due date cannot be in the past.");
+          return;
+        }
+      }
+
+      // ✅ Convert Date to ISO string for storage
+      const taskData = {
+        projectId: selectedProjectId,
+        title: form.title,
+        description: form.description,
+        priority: form.priority,
+        assignedToUserId: form.assignedToUserId,
+        dueDate: form.dueDate ? form.dueDate.toISOString() : null,
+      };
+
+      createTask(taskData);
       toast.success("Task created successfully.");
       setCreateOpen(false);
     } catch (err) {
@@ -178,6 +224,29 @@ export default function TaskPage() {
     }
   };
 
+  // ✅ Helper to format due date for display
+  const formatDueDate = (dateStr) => {
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  // ✅ Check if task is overdue
+  const isOverdue = (task) => {
+    if (!task.dueDate || task.status === "done") return false;
+    const dueDate = new Date(task.dueDate);
+    const today = getToday();
+    return dueDate < today;
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* ── Page header ───────────────────────────────── */}
@@ -190,7 +259,6 @@ export default function TaskPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Project selector */}
           <Select
             value={selectedProjectId}
             onValueChange={(val) => {
@@ -202,7 +270,7 @@ export default function TaskPage() {
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select project" />
             </SelectTrigger>
-            <SelectContent className={"rounded-xl"}>
+            <SelectContent className="rounded-xl">
               {myProjects.length === 0 ? (
                 <SelectItem value="none" disabled>
                   No projects
@@ -217,26 +285,17 @@ export default function TaskPage() {
             </SelectContent>
           </Select>
 
-          {isLeader && (
-            <Button className="gap-2 bg-linear-to-b from-[#14532d] to-[#064e3b]" onClick={openCreate}>
+          {selectedProjectId && (
+            <Button
+              className="gap-2 bg-linear-to-b from-[#14532d] to-[#064e3b]"
+              onClick={openCreate}
+            >
               <Plus size={16} />
               Add Task
             </Button>
           )}
         </div>
       </div>
-
-      {/* ── Member warning ────────────────────────────── */}
-      {selectedProjectId && !isLeader && (
-        <div className="flex items-center gap-2 text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 p-3 rounded-md border border-amber-500/20">
-          <AlertCircle size={14} />
-          <span>
-            You are a{" "}
-            <strong>{userRole?.role || "member"}</strong> in this project.
-            You can view and advance tasks but cannot create new ones.
-          </span>
-        </div>
-      )}
 
       {/* ── Filters ───────────────────────────────────── */}
       {selectedProjectId && (
@@ -251,7 +310,7 @@ export default function TaskPage() {
             <SelectTrigger className="sm:w-[160px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
-            <SelectContent className={"rounded-xl"}>
+            <SelectContent className="rounded-xl">
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="todo">To Do</SelectItem>
               <SelectItem value="in-progress">In Progress</SelectItem>
@@ -273,22 +332,21 @@ export default function TaskPage() {
           </p>
         </div>
       ) : filteredTasks.length === 0 ? (
-        /* ── Empty — no tasks ───────────────────────── */
         <div className="flex flex-col items-center justify-center gap-3 py-24 border border-dashed border-border rounded-xl text-center">
           <div className="p-4 rounded-full bg-muted">
             <ClipboardList size={28} className="text-muted-foreground" />
           </div>
           <p className="font-semibold text-sm">No tasks found</p>
           <p className="text-xs text-muted-foreground">
-            {isLeader
-              ? "Create your first task to get started."
-              : "No tasks have been assigned yet."}
+            Create your first task to get started.
           </p>
-          {isLeader && (
-            <Button size="sm" className="gap-2 mt-1 bg-linear-to-b from-[#14532d] to-[#064e3b]" onClick={openCreate}>
-              <Plus size={14} /> Add Task
-            </Button>
-          )}
+          <Button
+            size="sm"
+            className="gap-2 mt-1 bg-linear-to-b from-[#14532d] to-[#064e3b]"
+            onClick={openCreate}
+          >
+            <Plus size={14} /> Add Task
+          </Button>
         </div>
       ) : (
         /* ── Table ──────────────────────────────────── */
@@ -312,21 +370,19 @@ export default function TaskPage() {
                     key={task.id}
                     className={task.status === "done" ? "opacity-60" : ""}
                   >
-                    {/* Title */}
                     <TableCell className="font-medium">
                       <div className="flex flex-col gap-0.5">
                         <span className="truncate max-w-[220px]">
                           {task.title}
                         </span>
                         {task.description && (
-                          <span className="text-xs text-muted-foreground line-clamp-1 w-full  text-wrap">
+                          <span className="text-xs text-muted-foreground line-clamp-1 w-full text-wrap">
                             {task.description}
                           </span>
                         )}
                       </div>
                     </TableCell>
 
-                    {/* Assignee */}
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-sm">
                         <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-semibold shrink-0">
@@ -340,7 +396,6 @@ export default function TaskPage() {
                       </div>
                     </TableCell>
 
-                    {/* Status */}
                     <TableCell>
                       <Badge
                         variant="outline"
@@ -350,7 +405,6 @@ export default function TaskPage() {
                       </Badge>
                     </TableCell>
 
-                    {/* Priority */}
                     <TableCell>
                       <Badge
                         variant="outline"
@@ -360,21 +414,31 @@ export default function TaskPage() {
                       </Badge>
                     </TableCell>
 
-                    {/* Due date */}
+                    {/* ✅ Due date with overdue indicator */}
                     <TableCell>
-                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <div
+                        className={cn(
+                          "flex items-center gap-1.5 text-sm",
+                          isOverdue(task)
+                            ? "text-destructive font-medium"
+                            : "text-muted-foreground"
+                        )}
+                      >
                         <CalendarDays size={13} />
-                        {task.dueDate
-                          ? new Date(task.dueDate).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })
-                          : "No date"}
+                        {formatDueDate(task.dueDate) || (
+                          <span className="text-muted-foreground/50">No date</span>
+                        )}
+                        {isOverdue(task) && (
+                          <Badge
+                            variant="destructive"
+                            className="text-[10px] px-1.5 py-0"
+                          >
+                            Overdue
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
 
-                    {/* Actions */}
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -382,12 +446,11 @@ export default function TaskPage() {
                             <MoreHorizontal size={15} />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className={"rounded-lg"}>
-                          {/* Move forward — available to assignee + leaders */}
+                        <DropdownMenuContent align="end" className="rounded-lg">
                           {task.status !== "done" &&
                             (isLeader ||
                               task.assignedTo?.userId === user?.id) && (
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="gap-2 cursor-pointer rounded-lg"
                                 onClick={() => handleMove(task)}
                               >
@@ -396,7 +459,6 @@ export default function TaskPage() {
                               </DropdownMenuItem>
                             )}
 
-                          {/* Delete — creator or leader */}
                           {(isLeader || task.createdBy === user?.id) && (
                             <>
                               <DropdownMenuSeparator />
@@ -418,7 +480,7 @@ export default function TaskPage() {
             </Table>
           </div>
 
-          {/* Mobile cards — shown below sm breakpoint */}
+          {/* Mobile cards */}
           <div className="sm:hidden flex flex-col divide-y divide-border">
             {filteredTasks.map((task) => (
               <div
@@ -482,6 +544,11 @@ export default function TaskPage() {
                   >
                     {task.priority}
                   </Badge>
+                  {isOverdue(task) && (
+                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                      Overdue
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -491,14 +558,14 @@ export default function TaskPage() {
                       ? "Assigned to Me"
                       : task.assignedTo?.fullname}
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div
+                    className={cn(
+                      "flex items-center gap-1.5",
+                      isOverdue(task) && "text-destructive font-medium"
+                    )}
+                  >
                     <CalendarDays size={12} />
-                    {task.dueDate
-                      ? new Date(task.dueDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })
-                      : "No date"}
+                    {formatDueDate(task.dueDate) || "No date"}
                   </div>
                 </div>
               </div>
@@ -508,8 +575,8 @@ export default function TaskPage() {
       )}
 
       {/* ── Create task dialog ────────────────────────── */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen} >
-        <DialogContent>
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
             <DialogTitle>Create New Task</DialogTitle>
             <DialogDescription>
@@ -567,15 +634,48 @@ export default function TaskPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
+              {/* ✅ Custom Date Picker */}
               <div className="flex flex-col gap-2">
                 <Label>Due Date</Label>
-                <Input
-                  type="date"
-                  value={form.dueDate}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, dueDate: e.target.value }))
-                  }
-                />
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-10",
+                        !form.dueDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {form.dueDate ? (
+                        format(form.dueDate, "MMM dd, yyyy")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={form.dueDate}
+                      onSelect={handleDateSelect}
+                      disabled={(date) => date < getToday()}
+                      initialFocus
+                    />
+                    {form.dueDate && (
+                      <div className="border-t px-2 py-1.5">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full text-xs text-muted-foreground hover:text-foreground"
+                          onClick={clearDate}
+                        >
+                          Clear date
+                        </Button>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -599,7 +699,10 @@ export default function TaskPage() {
             </div>
 
             {formError && (
-              <p className="text-sm text-destructive">{formError}</p>
+              <p className="text-sm text-destructive flex items-center gap-1.5">
+                <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
+                {formError}
+              </p>
             )}
           </div>
 
@@ -607,7 +710,12 @@ export default function TaskPage() {
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} className={"bg-linear-to-b from-[#14532d] to-[#064e3b]"}>Assign Task</Button>
+            <Button
+              onClick={handleCreate}
+              className="bg-linear-to-b from-[#14532d] to-[#064e3b]"
+            >
+              Assign Task
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

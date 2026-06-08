@@ -2,15 +2,26 @@ import React, { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import SideBar from "@/components/SideBar";
 import { Input } from "@/components/ui/input";
-import { Bell, Search, UserRound } from "lucide-react";
+import { Bell, Search, UserRound, Settings,LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage,AvatarFallback } from "@/components/ui/avatar";
+import MobileBottomBar from "@/components/MobileBottomBar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuGroup
+} from "@/components/ui/dropdown-menu";
 
 
 import { useAuth } from "@/context/AuthContext";
 export default function DashboardLayout() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+
 
   // Listen for Ctrl+K to focus the search input
   useEffect(() => {
@@ -24,6 +35,7 @@ export default function DashboardLayout() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+ 
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -74,7 +86,11 @@ export default function DashboardLayout() {
 
               </div>
               <div className="text-xs text-neutral-600">
-                <Button variant="outline" className={"px-2 rounded-full py-3"}>
+                <DropdownMenu>
+                 <DropdownMenuTrigger asChild>
+                <Button variant="outline" className={"px-2 rounded-full py-3   shadow"}
+                  
+                  >
                   <Avatar>
                     <AvatarImage
                       src="/avatar.jpg"
@@ -93,10 +109,45 @@ export default function DashboardLayout() {
 
 
                 </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent className="w-48 rounded-xl" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">My Account</p>
+            <p className="text-xs leading-none text-green-700 lowercase">
+              {
+                user.email
+            }
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem className="cursor-pointer rounnded-lg">
+            <UserRound className="mr-1 h-4 w-4" />
+            <span>Profile</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem className="cursor-pointer rounnded-lg">
+            <Settings className="mr-1 h-4 w-4" />
+            <span>Settings</span>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-destructive focus:text-destructive cursor-pointer rounnded-lg"
+          onClick={() => logout()}
+        >
+          <LogOut className="mr-1 h-4 w-4" />
+          <span>Log out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+                </DropdownMenu>
+
 
 
 
               </div>
+             
 
 
 
@@ -111,6 +162,7 @@ export default function DashboardLayout() {
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
+        <MobileBottomBar />
       </div>
     </div>
   );
