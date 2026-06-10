@@ -116,7 +116,7 @@ export default function Signin() {
                                     <Button
                                         type="submit"
                                         disabled={loading}
-                                        className="bg-linear-to-r from-blue-600 via-indigo-500 to-purple-600 text-white cursor-pointer w-full "
+                                        className="bg-gradient-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full text-white cursor-pointer w-full "
                                     >
                                         {loading ? (
                                             <Loader size={18} className="animate-spin" />
@@ -127,7 +127,7 @@ export default function Signin() {
                                 </Field>
                                 <p className="ml-2">
                                     First time here?
-                                    <Link to={"/signup"} className="text-blue-800 ml-1">
+                                    <Link to={"/signup"} className="text-green-800 ml-1">
                                         create an account
                                     </Link>
                                 </p>

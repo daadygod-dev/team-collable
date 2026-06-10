@@ -7,10 +7,10 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-6 py-12 md:flex md:items-center md:justify-between lg:px-8">
         
         {/* Branding Logo Segment */}
-        <div className="flex justify-center items-center gap-3 md:order-1">
+        <div className="flex justify-center items-center gap-1.5 md:order-1">
           <img src="/logo.png" width={32} height={32} alt="Footer Logo" />
           <span className="text-sm font-bold tracking-tight text-foreground">
-            Team<span className="text-blue-600">Collable</span>
+            Team<span className="text-green-600">Collable</span>
           </span>
         </div>
 

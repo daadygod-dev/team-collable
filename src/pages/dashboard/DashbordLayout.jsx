@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import SideBar from "@/components/SideBar";
 import { Input } from "@/components/ui/input";
-import { Bell, Search, UserRound, Settings,LogOut } from "lucide-react";
+import { Bell, Search, UserRound, Settings,LogOut, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage,AvatarFallback } from "@/components/ui/avatar";
 import MobileBottomBar from "@/components/MobileBottomBar";
@@ -45,7 +45,7 @@ export default function DashboardLayout() {
       {/* 2. Right column */}
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
-        <header className="h-16 px-6 bg-card flex justify-between items-center shrink-0 my-3">
+        <header className="h-16 px-6  flex justify-between items-center shrink-0 mx-5.5 my-4 rounded-xl bg-neutral-50">
 
           {/* Search with icon + kbd badge */}
           <div className="relative w-full max-w-sm">
@@ -57,7 +57,7 @@ export default function DashboardLayout() {
 
             <Input
               id="search-input"
-              className="rounded-xl pl-9 pr-16"
+              className="rounded-xl pl-9 pr-16 bg-white"
               placeholder="Search tasks"
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setIsSearchFocused(false)}
@@ -77,8 +77,11 @@ export default function DashboardLayout() {
           </div>
 
           {/* Notifications and profile */}
-          <div className="flex items-center gap-3">
-            <button className="rounded-full bg-transparent h-6 w-6">
+          <div className="flex items-center gap-4">
+            <button className="rounded-full bg-white p-2 cursor-pointer ">
+              <Mail size={24}  className="text-current" />
+            </button>
+            <button className="rounded-full bg-white p-2 cursor-pointer ">
               <Bell size={24} />
             </button>
             <div className="flex gap-2">
@@ -88,7 +91,7 @@ export default function DashboardLayout() {
               <div className="text-xs text-neutral-600">
                 <DropdownMenu>
                  <DropdownMenuTrigger asChild>
-                <Button variant="outline" className={"px-2 rounded-full py-3   shadow"}
+                <Button variant="ghost" className={"px-2 rounded-full py-3   shadow-none"}
                   
                   >
                   <Avatar>
@@ -96,7 +99,7 @@ export default function DashboardLayout() {
                       src="/avatar.jpg"
                       
                       alt="@shadcn"
-                      className="grayscale"
+                      className=""
                     />
                     <AvatarFallback>CN</AvatarFallback>
                   </Avatar>

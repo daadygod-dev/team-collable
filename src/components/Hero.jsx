@@ -1,6 +1,6 @@
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HashLink as Link } from "react-router-hash-link"; 
+import { HashLink as Link } from "react-router-hash-link";
 
 
 export default function Hero() {
@@ -13,47 +13,48 @@ export default function Hero() {
 
       <div className="mx-auto max-w-5xl px-6 text-center lg:px-8">
         {/* Animated Badge Feature */}
-        <div className="mx-auto mb-6 flex max-w-fit items-center gap-2 rounded-full border border-border bg-muted/60 px-4 py-1.5 backdrop-blur-sm">
-          <Sparkles className="h-4 w-4 text-blue-500" />
+        <div className="mx-auto mb-6 flex max-w-fit items-center gap-2 rounded-full border border-green-600/50 bg-muted/60 px-4 py-1.5 backdrop-blur-sm">
+          <Sparkles className="h-4 w-4 text-green-500" />
           <span className="text-xs font-medium text-muted-foreground tracking-wide">
-            Introducing Team Collable v2.0
+            New Revolution of Collaboration
           </span>
         </div>
 
-        {/* Strong Meaningful Heading */}
         <h1 className="text-4xl font-black tracking-tight text-foreground sm:text-6xl lg:text-7xl leading-[1.15]">
-          Where remote teams <br />
-          <span className="bg-linear-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-            build things together.
+          Stop wasting time <br />
+          <span className="bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] bg-clip-text text-transparent">
+            hunting for information.
           </span>
         </h1>
 
         {/* Clear, High-Value Subtitle */}
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-xl">
-          Collaborate seamlessly in real-time. Manage workspaces, write documentation, 
-          and deploy your software pipelines without structural friction—all from a single dashboard.
+          Quit jumping between dozens of tabs just to get your daily work done. Bring your
+          team’s tasks, company docs, and project files into one clean, central workspace.
         </p>
+
+
 
         {/* Responsive Dual Action Call To Buttons */}
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link 
+          <Link
             to="/signup"
-             className=""
-            >
-          <Button size="lg" className="h-12 w-full px-6 text-sm font-medium sm:w-auto gap-2 bg-linear-to-r from-blue-600 via-indigo-500 to-purple-600 cursor-pointer">
-            Get Started Free
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+            className=""
+          >
+            <Button size="lg" className="h-12  px-6 text-sm font-medium sm:w-auto gap-2 bg-gradient-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] cursor-pointer rounded-full">
+              Get Started Free
+              <ArrowRight className="h-4 w-4" />
+            </Button>
           </Link>
-          
-          <Button size="lg" variant="outline" className="h-12 w-full px-6 text-sm font-medium sm:w-auto cursor-pointer">
+
+          <Button size="lg" variant="outline" className="h-12 w-full px-6 text-sm font-medium sm:w-auto cursor-pointer rounded-full">
             <Link
               to="#HowItWorks"
               smooth
-              >
+            >
               See how it works
             </Link>
-            
+
           </Button>
         </div>
 

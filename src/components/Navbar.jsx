@@ -16,16 +16,14 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80 z-50">
+    <nav className="fixed top-0 left-0 w-full border-none  bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80 z-50 h-fit">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-1">
           
           {/* Logo Section */}
           <div className="hrink-0 flex items-center gap-0.5">
-            <img src="/logo.png" width={40} height={40} alt="Logo" className="object-contain my-auto" />
-            <span className="text-md font-extrabold tracking-tight text-foreground">
-              Team<span className="text-blue-600">Collable</span>
-            </span>
+            <img src="/single-icon.png" width={70} height={70} alt="Logo" className="object-contain my-auto rounded-full" />
+            
           </div>
 
           {/* Desktop Navigation Links */}
@@ -45,10 +43,10 @@ export default function Navbar() {
           {/* Desktop Call to Action Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <RouterLink to="/signin" onClick={() => setIsOpen(false)}>
-            <Button variant="ghost" size="sm" className="cursor-pointer">Sign In</Button>
+            <Button variant="ghost"  className="cursor-pointer rounded-full">Sign In</Button>
             </RouterLink>
             <RouterLink to="/signup" onClick={() => setIsOpen(false)}>
-            <Button size="sm" className="bg-linear-to-r from-blue-600 cursor-pointer via-indigo-500 to-purple-600 text-white ">Get Started</Button>
+            <Button  className=" bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] text-white rounded-full ">Get Started</Button>
             </RouterLink>
             
           </div>

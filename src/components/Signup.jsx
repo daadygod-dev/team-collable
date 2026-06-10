@@ -120,16 +120,14 @@ export default function Signup() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                     />
-                                    <FieldDescription className={"ml-2"}>
-                                        We&apos;ll keep your account secure.
-                                    </FieldDescription>
+                                   
                                 </Field>
 
                                 <Field orientation="horizontal" className="flex gap-2 mt-4">
                                     <Button
                                         type="submit"
                                         disabled={loading}
-                                        className="bg-linear-to-r from-blue-600 via-indigo-500 to-purple-600 text-white cursor-pointer w-full rounded-md"
+                                        className="bg-gradient-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full text-white cursor-pointer w-full "
                                     >
                                         {loading ? (
                                             <Loader size={18} className="animate-spin" />
@@ -141,7 +139,7 @@ export default function Signup() {
 
                                 <p className="ml-2">
                                     Already have an account?
-                                    <Link to="/signin" className="text-blue-800 ml-1">
+                                    <Link to="/signin" className="text-green-800 ml-1">
                                         Sign in
                                     </Link>
                                 </p>

@@ -3,15 +3,14 @@ import { useTeams } from "@/context/TeamContext";
 import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 
-// Shadcn UI Imports
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +21,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -42,24 +40,23 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-// Lucide Icons
 import {
   Plus,
   Users,
   MoreHorizontal,
   Pencil,
   Trash2,
-  LayoutGrid,
-  List,
   UserPlus,
   ShieldCheck,
   Crown,
   Shield,
   LogOut,
   UserMinus,
-  AlertCircle
+  AlertCircle,
+  Settings,
 } from "lucide-react";
 
+// ── Style maps ─────────────────────────────────────────────
 const roleStyles = {
   owner: "bg-amber-500/10 text-amber-500 border-amber-500/20",
   admin: "bg-blue-500/10 text-blue-500 border-blue-500/20",
@@ -86,44 +83,41 @@ export default function TeamPage() {
     transferOwnership,
     hasRole,
     getTeamById,
-    getNonMembers,
   } = useTeams();
 
   const teams = getMyTeams();
 
-  // ── View Mode ──────────────────────────────────────────────
-  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
+  // ── Selected team ──────────────────────────────────────
+  const [selectedTeamId, setSelectedTeamId] = useState(teams[0]?.id || "");
 
-  // ── Create Dialog State ────────────────────────────────────
+  const selectedTeam = selectedTeamId ? getTeamById(selectedTeamId) : null;
+  const myRoleInTeam = selectedTeam?.members.find(
+    (m) => m.userId === user?.id
+  )?.role;
+  const isOwnerOfSelected = myRoleInTeam === "owner";
+  const isAdminOfSelected = ["owner", "admin"].includes(myRoleInTeam);
+
+  // ── Create Dialog ──────────────────────────────────────
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ name: "", description: "" });
   const [createError, setCreateError] = useState("");
 
-  // ── Edit Dialog State ──────────────────────────────────────
+  // ── Edit Dialog ────────────────────────────────────────
   const [editOpen, setEditOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", description: "" });
   const [editError, setEditError] = useState("");
 
-  // ── Manage Members Dialog State ────────────────────────────
- // ── Manage Members Dialog State ────────────────────────────
-const [manageTeamId, setManageTeamId] = useState(null);
-const [inviteEmail, setInviteEmail] = useState("");   // ✅ email input instead of dropdown
-const [inviteRole, setInviteRole] = useState("member");
-const [inviteError, setInviteError] = useState("");
-const [invitedUser, setInvitedUser] = useState("");
+  // ── Add Member Dialog ──────────────────────────────────
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("member");
+  const [inviteError, setInviteError] = useState("");
 
-  // ── Confirm Action Dialog State ────────────────────────────
+  // ── Confirm Dialog ─────────────────────────────────────
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
 
-  // ── Derived State for Manage Dialog ────────────────────────
-  // This ensures that when inviteMember updates the context, our modal instantly reflects the new member
-  const manageTeam = manageTeamId ? getTeamById(manageTeamId) : null;
-  const nonMembers = manageTeamId ? getNonMembers(manageTeamId) : [];
-  const isOwnerInManagedTeam = manageTeam?.members.find((m) => m.userId === user?.id)?.role === "owner";
-
-  // ── Handlers ───────────────────────────────────────────────
+  // ── Handlers ───────────────────────────────────────────
 
   const handleCreate = () => {
     try {
@@ -131,19 +125,24 @@ const [invitedUser, setInvitedUser] = useState("");
         setCreateError("Team name is required.");
         return;
       }
-      createTeam(createForm);
+      const newTeam = createTeam(createForm);
       toast.success("Team created successfully!");
       setCreateOpen(false);
       setCreateForm({ name: "", description: "" });
       setCreateError("");
+      // Auto-select the newly created team
+      setSelectedTeamId(newTeam.id);
     } catch (err) {
       setCreateError(err.message);
     }
   };
 
-  const openEdit = (team) => {
-    setEditTarget(team);
-    setEditForm({ name: team.name, description: team.description });
+  const openEdit = () => {
+    if (!selectedTeam) return;
+    setEditForm({
+      name: selectedTeam.name,
+      description: selectedTeam.description,
+    });
     setEditError("");
     setEditOpen(true);
   };
@@ -154,112 +153,116 @@ const [invitedUser, setInvitedUser] = useState("");
         setEditError("Team name is required.");
         return;
       }
-      updateTeam(editTarget.id, editForm);
+      updateTeam(selectedTeamId, editForm);
       toast.success("Team updated successfully!");
       setEditOpen(false);
-      setEditTarget(null);
       setEditError("");
     } catch (err) {
       setEditError(err.message);
     }
   };
 
-  const handleDelete = (teamId) => {
-    try {
-      deleteTeam(teamId);
-      toast.success("Team deleted successfully!");
-    } catch (err) {
-      toast.error(err.message);
-    }
-  };
-
-  const handleLeave = (teamId) => {
-    try {
-      leaveTeam(teamId);
-      toast.success("You have left the team.");
-    } catch (err) {
-      toast.error(err.message);
-    }
-  };
-
-  const openManage = (teamId) => {
-    setManageTeamId(teamId);
-    setInviteUserId("");
+  const openAddMember = () => {
+    if (!selectedTeamId) return toast.error("Select a team first.");
+    setInviteEmail("");
     setInviteRole("member");
+    setInviteError("");
+    setAddMemberOpen(true);
   };
 
- // ── handleInvite — use email directly ─────────────────────
-const handleInvite = () => {
+  const handleInvite = () => {
     try {
-        if (!inviteEmail.trim()) {
-            setInviteError("Please enter an email address.");
-            return;
-        }
-        inviteMember(manageTeam.id, {
-            email: inviteEmail.trim(),
-            role: inviteRole,
-        });
-        toast.success(`Member added successfully!`);
-        setInviteEmail("");
-        setInviteRole("member");
-        setInviteError("");
+      if (!inviteEmail.trim()) {
+        setInviteError("Please enter an email address.");
+        return;
+      }
+      inviteMember(selectedTeamId, {
+        email: inviteEmail.trim(),
+        role: inviteRole,
+      });
+      toast.success("Member added successfully!");
+      setInviteEmail("");
+      setInviteRole("member");
+      setInviteError("");
+      setAddMemberOpen(false);
     } catch (err) {
-        setInviteError(err.message);   // shows "no account found" or "already a member"
+      setInviteError(err.message);
     }
-};
+  };
 
-  const handleRemoveMember = (teamId, userId, name) => {
+  const handleRemoveMember = (userId, name) => {
     try {
-      removeMember(teamId, userId);
+      removeMember(selectedTeamId, userId);
       toast.success(`${name} has been removed.`);
     } catch (err) {
       toast.error(err.message);
     }
   };
 
-  const handleRoleChange = (teamId, userId, newRole) => {
+  const handleRoleChange = (userId, newRole) => {
     try {
-      updateMemberRole(teamId, userId, newRole);
+      updateMemberRole(selectedTeamId, userId, newRole);
       toast.success("Role updated successfully!");
     } catch (err) {
       toast.error(err.message);
     }
   };
 
-  const handleTransferOwnership = (teamId, userId) => {
+  const handleTransferOwnership = (userId) => {
     try {
-      transferOwnership(teamId, userId);
+      transferOwnership(selectedTeamId, userId);
       toast.success("Ownership transferred successfully!");
       setConfirmOpen(false);
       setConfirmAction(null);
-      setManageTeamId(null); // Close manage dialog as role changed significantly
     } catch (err) {
       toast.error(err.message);
     }
   };
 
-  const openConfirm = (action, teamId, payload) => {
-    setConfirmAction({ action, teamId, payload });
+  const handleDeleteTeam = () => {
+    try {
+      deleteTeam(selectedTeamId);
+      toast.success("Team deleted successfully!");
+      const remaining = getMyTeams();
+      setSelectedTeamId(remaining[0]?.id || "");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleLeaveTeam = () => {
+    try {
+      leaveTeam(selectedTeamId);
+      toast.success("You have left the team.");
+      const remaining = getMyTeams();
+      setSelectedTeamId(remaining[0]?.id || "");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const openConfirm = (action, payload) => {
+    setConfirmAction({ action, payload });
     setConfirmOpen(true);
   };
 
   const executeConfirm = () => {
     if (!confirmAction) return;
-    const { action, teamId, payload } = confirmAction;
+    const { action, payload } = confirmAction;
 
     switch (action) {
       case "delete":
-        handleDelete(teamId);
+        handleDeleteTeam();
         break;
       case "leave":
-        handleLeave(teamId);
+        handleLeaveTeam();
         break;
       case "remove":
-        handleRemoveMember(teamId, payload.userId, payload.name);
+        handleRemoveMember(payload.userId, payload.name);
         break;
       case "transfer":
-        handleTransferOwnership(teamId, payload.userId);
-        return; // Early return handled inside handleTransferOwnership
+        handleTransferOwnership(payload.userId);
+        return; // early return — handleTransferOwnership closes dialog itself
       default:
         break;
     }
@@ -268,109 +271,109 @@ const handleInvite = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* ── Page Header ───────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Teams</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage your teams, members, and roles.
-          </p>
+    <div className="flex flex-col gap-6 p-5 md:p-8 rounded-xl bg-neutral-50">
+      {/* ── Page Header ─────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Team</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Manage your team members and their roles.
+            </p>
+          </div>
+
+          {/* Team selector — only when multiple teams */}
+          {teams.length > 1 && (
+            <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+              <SelectTrigger className="w-[160px] h-8 text-sm">
+                <SelectValue placeholder="Select team" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {teams.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
-          {/* View Toggle */}
-          <div className="flex items-center border rounded-md p-0.5">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid size={16} />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setViewMode("list")}
-            >
-              <List size={16} />
-            </Button>
-          </div>
+          {/* New Team button — always visible */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 cursor-pointer rounded-full"
+            onClick={() => {
+              setCreateForm({ name: "", description: "" });
+              setCreateError("");
+              setCreateOpen(true);
+            }}
+          >
+            <Plus size={14} />
+            New Team
+          </Button>
 
-          {/* Create Team Dialog */}
-          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 cursor-pointer capitalize bg-linear-to-b from-[#14532d] to-[#064e3b]">
-                <Plus size={16} />
-                New Team
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md rounded-2xl">
-              <DialogHeader>
-                <DialogTitle>Create New Team</DialogTitle>
-                <DialogDescription>
-                  You will be assigned as the owner of this team.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="flex flex-col gap-4 py-2">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="name">Team Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g. Engineering Team"
-                    value={createForm.name}
-                    onChange={(e) =>
-                      setCreateForm((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    className="border"
-                    id="description"
-                    placeholder="What is this team about?"
-                    value={createForm.description}
-                    onChange={(e) =>
-                      setCreateForm((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                    rows={3}
-                  />
-                </div>
-
-                {createError && (
-                  <p className="text-sm text-destructive">{createError}</p>
-                )}
-              </div>
-
-              <DialogFooter>
+          {/* Team settings dropdown */}
+          {selectedTeam && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  onClick={() => setCreateOpen(false)}
-                  className="cursor-pointer capitalize"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
                 >
-                  Cancel
+                  <Settings size={15} />
                 </Button>
-                <Button
-                  onClick={handleCreate}
-                  className="cursor-pointer capitalize bg-linear-to-b from-[#14532d] to-[#064e3b]"
-                >
-                  Create Team
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="rounded-xl w-[180px]">
+                {isAdminOfSelected && (
+                  <DropdownMenuItem
+                    className="gap-2 cursor-pointer rounded-lg"
+                    onClick={openEdit}
+                  >
+                    <Pencil size={14} />
+                    Edit Team
+                  </DropdownMenuItem>
+                )}
+                {!isOwnerOfSelected && (
+                  <DropdownMenuItem
+                    className="gap-2 cursor-pointer text-destructive focus:text-destructive rounded-lg"
+                    onClick={() => openConfirm("leave")}
+                  >
+                    <LogOut size={14} />
+                    Leave Team
+                  </DropdownMenuItem>
+                )}
+                {isOwnerOfSelected && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-2 cursor-pointer text-destructive focus:text-destructive rounded-lg"
+                      onClick={() => openConfirm("delete")}
+                    >
+                      <Trash2 size={14} />
+                      Delete Team
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          <Button
+            className="gap-2 cursor-pointer bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full"
+            onClick={openAddMember}
+            disabled={!selectedTeamId || !isAdminOfSelected}
+          >
+            <UserPlus size={16} />
+            Add Member
+          </Button>
         </div>
       </div>
 
-      {/* ── Team Grid / List ──────────────────────────────── */}
+      {/* ── Empty: no teams ──────────────────────────────── */}
       {teams.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 py-24 text-center border border-dashed border-border rounded-xl">
           <div className="p-4 rounded-full bg-muted">
@@ -384,67 +387,280 @@ const handleInvite = () => {
           </div>
           <Button
             size="sm"
-            className="gap-2 cursor-pointer capitalize bg-linear-to-b from-[#14532d] to-[#064e3b]"
-            onClick={() => setCreateOpen(true)}
+            className="gap-2 cursor-pointer bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full"
+            onClick={() => {
+              setCreateForm({ name: "", description: "" });
+              setCreateError("");
+              setCreateOpen(true);
+            }}
           >
             <Plus size={14} />
             New Team
           </Button>
         </div>
+      ) : !selectedTeam || selectedTeam.members.length === 0 ? (
+        /* ── Empty: no members ───────────────────────────── */
+        <div className="flex flex-col items-center justify-center gap-3 py-24 text-center border border-dashed border-border rounded-xl">
+          <div className="p-4 rounded-full bg-muted">
+            <Users size={28} className="text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-semibold text-sm">No members yet</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Add your first member to get started.
+            </p>
+          </div>
+          {isAdminOfSelected && (
+            <Button
+              size="sm"
+              className="gap-2 cursor-pointer bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full"
+              onClick={openAddMember}
+            >
+              <UserPlus size={14} />
+              Add Member
+            </Button>
+          )}
+        </div>
       ) : (
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-              : "flex flex-col gap-4"
-          }
-        >
-          {teams.map((team) => {
-            const isOwnerOrAdmin = hasRole(team.id, "owner", "admin");
-            const isOwner = hasRole(team.id, "owner");
-            const myRole = team.members.find((m) => m.userId === user?.id)?.role;
+        /* ── Members Table ──────────────────────────────────*/
+        <div className="rounded-xl border border-border overflow-hidden bg-white">
+          {/* Desktop table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="pl-4">Members</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Tasks</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-[50px] pr-4" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selectedTeam.members.map((member) => {
+                  const RoleIcon = roleIcons[member.role] || Shield;
+                  const isMe = member.userId === user?.id;
+                  const isMemberOwner = member.role === "owner";
+                  const canManage =
+                    isOwnerOfSelected && !isMe && !isMemberOwner;
 
-            return (
-              <Card
-                key={team.id}
-                className={`flex justify-between shadow-md transition-shadow rounded-2xl ${
-                  viewMode === "list"
-                    ? "flex-row items-center p-4 gap-6"
-                    : "flex-col"
-                }`}
-              >
-                <CardHeader className={`pb-2 ${viewMode === "list" ? "p-0 flex-1" : ""}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex items-center justify-center rounded-lg bg-gradient-to-b from-[#14532d] to-[#064e3b] p-2 text-white ${
-                          viewMode === "list" ? "w-9 h-9" : "w-10 h-10"
-                        }`}
-                      >
-                        <Users size={20} />
-                      </div>
-                      <div>
-                        <CardTitle
-                          className={`leading-snug ${
-                            viewMode === "list" ? "text-base" : "text-lg"
-                          }`}
-                        >
-                          {team.name}
-                        </CardTitle>
-                        {myRole && (
+                  return (
+                    <TableRow key={member.userId} className="group">
+                      {/* Name */}
+                      <TableCell className="pl-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            {member.role === "owner" ? (
+                              <img src="/admin.png" alt={member.fullname} className="" />
+                            ) : member.role === "admin" ? (
+                              <img src="/avatar.png" alt={member.fullname} className="" />
+                            ) : (
+                              <img src="/user-avatar.png" alt={member.fullname} className="" />
+                            )}
+                          </Avatar>
+
+                          <span className="text-sm font-medium">
+                            {member.fullname}
+                            {isMe && (
+                              <span className="text-muted-foreground text-xs ml-1.5">
+                                (You)
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* Email */}
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {member.email}
+                        </span>
+                      </TableCell>
+
+                      {/* Role */}
+                      <TableCell>
+                        {canManage ? (
+                          <Select
+                            value={member.role}
+                            onValueChange={(val) => {
+                              if (val === "owner") {
+                                openConfirm("transfer", {
+                                  userId: member.userId,
+                                  name: member.fullname,
+                                });
+                              } else {
+                                handleRoleChange(member.userId, val);
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-8 w-[110px] text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Admin</SelectItem>
+                              <SelectItem value="member">Member</SelectItem>
+                              <SelectItem value="owner">Make Owner</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
                           <Badge
                             variant="outline"
-                            className={`text-[10px] capitalize mt-1 ${
-                              roleStyles[myRole]
-                            }`}
+                            className={`text-xs capitalize gap-1 ${roleStyles[member.role]}`}
                           >
-                            {myRole}
+                            <RoleIcon size={10} />
+                            {member.role}
                           </Badge>
                         )}
+                      </TableCell>
+
+                      {/* Tasks */}
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">—</span>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs"
+                        >
+                          Active
+                        </Badge>
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreHorizontal size={15} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="rounded-lg w-[180px]"
+                          >
+                            {canManage && (
+                              <>
+                                <DropdownMenuItem
+                                  className="gap-2 cursor-pointer rounded-lg"
+                                  onClick={() =>
+                                    handleRoleChange(member.userId, "admin")
+                                  }
+                                >
+                                  <ShieldCheck size={14} />
+                                  Set as Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="gap-2 cursor-pointer rounded-lg"
+                                  onClick={() =>
+                                    handleRoleChange(member.userId, "member")
+                                  }
+                                >
+                                  <Shield size={14} />
+                                  Set as Member
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="gap-2 cursor-pointer rounded-lg"
+                                  onClick={() =>
+                                    openConfirm("transfer", {
+                                      userId: member.userId,
+                                      name: member.fullname,
+                                    })
+                                  }
+                                >
+                                  <Crown size={14} />
+                                  Transfer Ownership
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="gap-2 cursor-pointer text-destructive focus:text-destructive rounded-lg"
+                                  onClick={() =>
+                                    openConfirm("remove", {
+                                      userId: member.userId,
+                                      name: member.fullname,
+                                    })
+                                  }
+                                >
+                                  <UserMinus size={14} />
+                                  Remove Member
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {/* Admin can also be removed by owner */}
+                            {isOwnerOfSelected &&
+                              !isMe &&
+                              isMemberOwner &&
+                              selectedTeam.members.length > 1 && (
+                                <DropdownMenuItem
+                                  className="gap-2 cursor-pointer rounded-lg"
+                                  onClick={() =>
+                                    openConfirm("transfer", {
+                                      userId: member.userId,
+                                      name: member.fullname,
+                                    })
+                                  }
+                                >
+                                  <Crown size={14} />
+                                  Transfer Ownership
+                                </DropdownMenuItem>
+                              )}
+                            {isMe && !isMemberOwner && (
+                              <DropdownMenuItem
+                                className="gap-2 cursor-pointer text-destructive focus:text-destructive rounded-lg"
+                                onClick={() => openConfirm("leave")}
+                              >
+                                <LogOut size={14} />
+                                Leave Team
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="sm:hidden flex flex-col divide-y divide-border">
+            {selectedTeam.members.map((member) => {
+              const RoleIcon = roleIcons[member.role] || Shield;
+              const isMe = member.userId === user?.id;
+              const isMemberOwner = member.role === "owner";
+              const canManage = isOwnerOfSelected && !isMe && !isMemberOwner;
+
+              return (
+                <div key={member.userId} className="p-4 flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarFallback className="bg-muted text-xs font-semibold">
+                          {member.fullname?.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium block truncate">
+                          {member.fullname}
+                          {isMe && (
+                            <span className="text-muted-foreground text-xs ml-1.5">
+                              (You)
+                            </span>
+                          )}
+                        </span>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {member.email}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -452,95 +668,145 @@ const handleInvite = () => {
                           size="icon"
                           className="h-8 w-8 shrink-0"
                         >
-                          <MoreHorizontal size={16} />
+                          <MoreHorizontal size={15} />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="rounded-2xl">
-                        {isOwnerOrAdmin && (
-                          <DropdownMenuItem
-                            className="gap-2 cursor-pointer capitalize rounded-xl"
-                            onClick={() => openManage(team.id)}
-                          >
-                            <UserPlus size={14} />
-                            Manage Members
-                          </DropdownMenuItem>
+                      <DropdownMenuContent align="end">
+                        {canManage && (
+                          <>
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer"
+                              onClick={() =>
+                                handleRoleChange(member.userId, "admin")
+                              }
+                            >
+                              <ShieldCheck size={14} />
+                              Set as Admin
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer"
+                              onClick={() =>
+                                handleRoleChange(member.userId, "member")
+                              }
+                            >
+                              <Shield size={14} />
+                              Set as Member
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                              onClick={() =>
+                                openConfirm("remove", {
+                                  userId: member.userId,
+                                  name: member.fullname,
+                                })
+                              }
+                            >
+                              <UserMinus size={14} />
+                              Remove
+                            </DropdownMenuItem>
+                          </>
                         )}
-                        {isOwnerOrAdmin && (
+                        {isMe && !isMemberOwner && (
                           <DropdownMenuItem
-                            className="gap-2 cursor-pointer capitalize rounded-xl"
-                            onClick={() => openEdit(team)}
-                          >
-                            <Pencil size={14} />
-                            Edit Team
-                          </DropdownMenuItem>
-                        )}
-                        {isOwnerOrAdmin && <DropdownMenuSeparator />}
-                        {!isOwner && (
-                          <DropdownMenuItem
-                            className="gap-2 cursor-pointer text-destructive focus:text-destructive capitalize rounded-xl"
-                            onClick={() => openConfirm("leave", team.id)}
+                            className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                            onClick={() => openConfirm("leave")}
                           >
                             <LogOut size={14} />
-                            Leave Team
-                          </DropdownMenuItem>
-                        )}
-                        {isOwner && (
-                          <DropdownMenuItem
-                            className="gap-2 cursor-pointer text-destructive focus:text-destructive capitalize rounded-xl"
-                            onClick={() => openConfirm("delete", team.id)}
-                          >
-                            <Trash2 size={14} />
-                            Delete Team
+                            Leave
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
 
-                  {viewMode === "grid" && (
-                    <CardDescription className="text-xs line-clamp-2 mt-2">
-                      {team.description || "No description provided."}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-
-                {viewMode === "list" && (
-                  <CardContent className="py-0 flex-1 hidden md:block">
-                    <p className="text-sm text-muted-foreground line-clamp-1">
-                      {team.description || "No description provided."}
-                    </p>
-                  </CardContent>
-                )}
-
-                <CardFooter
-                  className={`flex items-center justify-between text-xs text-muted-foreground ${
-                    viewMode === "list"
-                      ? "p-0 w-48 justify-end gap-4"
-                      : "pt-2 border-t border-border"
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Users size={13} />
-                    {team.members.length}{" "}
-                    {team.members.length === 1 ? "member" : "members"}
-                  </span>
-                  {viewMode === "grid" && (
-                    <span className="flex items-center gap-1.5">
-                      Created{" "}
-                      {new Date(team.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  )}
-                </CardFooter>
-              </Card>
-            );
-          })}
+                  <div className="flex flex-wrap items-center gap-2 pl-11">
+                    <Badge
+                      variant="outline"
+                      className={`text-xs capitalize gap-1 ${roleStyles[member.role]}`}
+                    >
+                      <RoleIcon size={10} />
+                      {member.role}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-xs"
+                    >
+                      Active
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* ── Edit Team Dialog ──────────────────────────────── */}
+      {/* ── Create Team Dialog ───────────────────────────── */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Team</DialogTitle>
+            <DialogDescription>
+              You will be assigned as the owner of this team.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-2">
+              <Label>Team Name</Label>
+              <Input
+                placeholder="e.g. Engineering Team"
+                value={createForm.name}
+                onChange={(e) =>
+                  setCreateForm((prev) => ({ ...prev, name: e.target.value }))
+                }
+                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Description</Label>
+              <Textarea
+                placeholder="What is this team about?"
+                value={createForm.description}
+                onChange={(e) =>
+                  setCreateForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                rows={3}
+              />
+            </div>
+
+            {createError && (
+              <p className="text-sm text-destructive flex items-center gap-1.5">
+                <AlertCircle size={12} />
+                {createError}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreateOpen(false)}
+              className="cursor-pointer rounded-full"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreate}
+              className="cursor-pointer bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full"
+            >
+              Create Team
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Team Dialog ─────────────────────────────── */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
@@ -550,20 +816,19 @@ const handleInvite = () => {
 
           <div className="flex flex-col gap-4 py-2">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-name">Team Name</Label>
+              <Label>Team Name</Label>
               <Input
-                id="edit-name"
                 value={editForm.name}
                 onChange={(e) =>
                   setEditForm((prev) => ({ ...prev, name: e.target.value }))
                 }
+                onKeyDown={(e) => e.key === "Enter" && handleEdit()}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="edit-description">Description</Label>
+              <Label>Description</Label>
               <Textarea
-                id="edit-description"
                 value={editForm.description}
                 onChange={(e) =>
                   setEditForm((prev) => ({
@@ -576,7 +841,10 @@ const handleInvite = () => {
             </div>
 
             {editError && (
-              <p className="text-sm text-destructive">{editError}</p>
+              <p className="text-sm text-destructive flex items-center gap-1.5">
+                <AlertCircle size={12} />
+                {editError}
+              </p>
             )}
           </div>
 
@@ -584,13 +852,13 @@ const handleInvite = () => {
             <Button
               variant="outline"
               onClick={() => setEditOpen(false)}
-              className="cursor-pointer capitalize"
+              className="cursor-pointer rounded-full"
             >
               Cancel
             </Button>
             <Button
               onClick={handleEdit}
-              className="cursor-pointer capitalize bg-linear-to-b from-[#14532d] to-[#064e3b]"
+              className="cursor-pointer bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full"
             >
               Save Changes
             </Button>
@@ -598,209 +866,83 @@ const handleInvite = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ── Manage Members Dialog ─────────────────────────── */}
-      <Dialog
-        open={!!manageTeamId}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) setManageTeamId(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-lg rounded-2xl">
+      {/* ── Add Member Dialog ────────────────────────────── */}
+      <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Manage Members</DialogTitle>
+            <DialogTitle>Add Member</DialogTitle>
             <DialogDescription>
-              Invite new members or update existing roles for{" "}
+              Add a new member to{" "}
               <span className="font-semibold text-foreground">
-                {manageTeam?.name}
+                {selectedTeam?.name}
               </span>
               .
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-6 py-4">
-            {/* Invite Section - Only visible to Owner/Admin */}
-           
-{isOwnerInManagedTeam && (
-    <div className="flex flex-col gap-3 p-3 border rounded-xl bg-muted/40">
-        <Label className="text-sm font-semibold flex items-center gap-2">
-            <UserPlus size={14} /> Add New Member
-        </Label>
-
-        <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-                {/* ✅ Email input instead of dropdown */}
-                <Input
-                    placeholder="Enter member's email address"
-                    value={inviteEmail}
-                    onChange={(e) => {
-                        setInviteEmail(e.target.value);
-                        setInviteError("");
-                    }}
-                    className="flex-1"
-                />
-                <Select value={inviteRole} onValueChange={setInviteRole}>
-                    <SelectTrigger className="w-28 cursor-pointer">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="member">Member</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Button
-                    onClick={handleInvite}
-                    disabled={!inviteEmail.trim()}
-                    className="bg-linear-to-b from-[#14532d] to-[#064e3b] capitalize"
-                >
-                    Add
-                </Button>
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-2">
+              <Label>Email Address</Label>
+              <Input
+                placeholder="Enter member's email address"
+                value={inviteEmail}
+                onChange={(e) => {
+                  setInviteEmail(e.target.value);
+                  setInviteError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+              />
             </div>
 
-            {/* Inline error — shows why invite failed */}
+            <div className="flex flex-col gap-2">
+              <Label>Role</Label>
+              <Select value={inviteRole} onValueChange={setInviteRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {inviteError && (
-                <p className="text-xs text-destructive flex items-center gap-1.5">
-                    <AlertCircle size={12} />
-                    {inviteError}
-                </p>
+              <p className="text-sm text-destructive flex items-center gap-1.5">
+                <AlertCircle size={12} />
+                {inviteError}
+              </p>
             )}
 
             <p className="text-xs text-muted-foreground">
-                The person must have an account to be added.
+              The person must have an account to be added.
             </p>
-        </div>
-    </div>
-)}
-
-            {/* Current Members List */}
-            <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
-              {manageTeam?.members.map((member) => {
-                const RoleIcon = roleIcons[member.role] || Shield;
-                const isMe = member.userId === user?.id;
-                const isMemberOwner = member.role === "owner";
-                const canManageMember = isOwnerInManagedTeam && !isMe;
-
-                return (
-                  <div
-                    key={member.userId}
-                    className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-muted text-xs">
-                          {member.fullname?.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {member.fullname}{" "}
-                          {isMe && (
-                            <span className="text-muted-foreground text-xs">
-                              (You)
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {member.email}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {canManageMember && !isMemberOwner ? (
-                        <Select
-                          value={member.role}
-                          onValueChange={(val) => {
-                            if (val === "owner") {
-                              openConfirm("transfer", manageTeam.id, {
-                                userId: member.userId,
-                                name: member.fullname,
-                              });
-                            } else {
-                              handleRoleChange(
-                                manageTeam.id,
-                                member.userId,
-                                val
-                              );
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="h-8 w-28 text-xs cursor-pointer">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem
-                              value="admin"
-                              className="cursor-pointer"
-                            >
-                              Admin
-                            </SelectItem>
-                            <SelectItem
-                              value="member"
-                              className="cursor-pointer"
-                            >
-                              Member
-                            </SelectItem>
-                            <SelectItem
-                              value="owner"
-                              className="cursor-pointer"
-                            >
-                              Make Owner
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] capitalize gap-1 ${roleStyles[member.role]}`}
-                        >
-                          <RoleIcon size={10} />
-                          {member.role}
-                        </Badge>
-                      )}
-
-                      {canManageMember && !isMemberOwner && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                            >
-                              <MoreHorizontal size={14} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="rounded-xl"
-                          >
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive gap-2 cursor-pointer rounded-xl"
-                              onClick={() =>
-                                openConfirm("remove", manageTeam.id, {
-                                  userId: member.userId,
-                                  name: member.fullname,
-                                })
-                              }
-                            >
-                              <UserMinus size={14} /> Remove Member
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAddMemberOpen(false)}
+              className="cursor-pointer rounded-full"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleInvite}
+              disabled={!inviteEmail.trim()}
+              className="cursor-pointer bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full"
+            >
+              Add Member
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ── Confirm Action Dialog ─────────────────────────── */}
+      {/* ── Confirm Action Dialog ────────────────────────── */}
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="capitalize">
+            <DialogTitle>
               {confirmAction?.action === "delete" && "Delete Team"}
               {confirmAction?.action === "leave" && "Leave Team"}
               {confirmAction?.action === "remove" && "Remove Member"}
@@ -820,15 +962,18 @@ const handleInvite = () => {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setConfirmOpen(false)}
-              className="capitalize cursor-pointer"
+              onClick={() => {
+                setConfirmOpen(false);
+                setConfirmAction(null);
+              }}
+              className="cursor-pointer rounded-full"
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={executeConfirm}
-              className="capitalize cursor-pointer"
+              className="cursor-pointer rounded-full"
             >
               Confirm
             </Button>

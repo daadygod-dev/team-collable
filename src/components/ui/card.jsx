@@ -41,7 +41,7 @@ function CardTitle({
   return (
     <div
       data-slot="card-title"
-      className={cn("font-heading text-lg font-semibold tracking-wider uppercase", className)}
+      className={cn(" text-lg font-semibold tracking-wider uppercase", className)}
       {...props} />
   );
 }

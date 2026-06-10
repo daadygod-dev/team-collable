@@ -1,30 +1,30 @@
-import { Download, Users, Code2, Rocket } from "lucide-react";
+import { PlusCircle, UserPlus, FileEdit, CheckCircle } from "lucide-react";
 
 export default function HowItWorks() {
   const steps = [
     {
       id: "01",
-      icon: <Download className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
-      title: "Initialize Your Workspace",
-      description: "Connect your local environment or Termux terminal using our single-line initialization command script."
+      icon: <PlusCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
+      title: "Create Your Workspace",
+      description: "Set up your central team hub in seconds. No complex configuration or messy installations required."
     },
     {
       id: "02",
-      icon: <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />,
-      title: "Invite Your Engineering Squad",
-      description: "Generate a secure, encrypted workspace link to instantly bring developers and product managers into your sandbox room."
+      icon: <UserPlus className="h-5 w-5 text-purple-600 dark:text-purple-400" />,
+      title: "Invite Your Team",
+      description: "Send a secure link to bring your teammates, managers, and external partners into your shared workspace instantly."
     },
     {
       id: "03",
-      icon: <Code2 className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />,
-      title: "Build and Pair Synchronously",
-      description: "Write code together with multiplayer editing streams, synchronized staging buffers, and real-time cursor tracking."
+      icon: <FileEdit className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />,
+      title: "Collaborate Together",
+      description: "Work on files, plan your weekly tasks, and share updates side-by-side with your team in real time."
     },
     {
       id: "04",
-      icon: <Rocket className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />,
-      title: "Ship to Global Edge Routers",
-      description: "Review test logs together and push builds directly to production edge environments with built-in pipeline hooks."
+      icon: <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />,
+      title: "Finish Your Projects",
+      description: "Review your final work together, track key outcomes, and complete your team goals on time."
     }
   ];
 
@@ -34,14 +34,14 @@ export default function HowItWorks() {
         
         {/* Header Layout Block */}
         <div className="mx-auto max-w-2xl text-center mb-20">
-          <h2 className="text-base font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-            Frictionless Integration
+          <h2 className="text-base font-semibold uppercase tracking-wider text-green-600 dark:text-blue-400">
+            Simple Setup
           </h2>
           <p className="mt-2 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-            From setup to shipping in minutes.
+            Get started in just four steps.
           </p>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground sm:text-lg">
-            We stripped away the configuration clutter so you can focus entirely on your code, assets, and collaboration framework.
+            We removed the confusing options so you and your team can focus entirely on everyday work and collaboration.
           </p>
         </div>
 
@@ -60,13 +60,13 @@ export default function HowItWorks() {
               </div>
 
               {/* Icon Container Sphere */}
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background border-2 border-border transition-all duration-300 group-hover:border-blue-500 group-hover:shadow-md mt-2">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background border-2 border-border transition-all duration-300 group-hover:border-green-500 group-hover:shadow-md mt-2">
                 {step.icon}
               </div>
 
               {/* Text Layout Stack */}
               <div className="mt-6">
-                <h3 className="text-lg font-bold tracking-tight text-foreground transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                <h3 className="text-lg font-bold tracking-tight text-foreground transition-colors group-hover:text-green-600 dark:group-hover:text-green-400">
                   {step.title}
                 </h3>
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground max-w-xs mx-auto">

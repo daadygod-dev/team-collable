@@ -16,13 +16,16 @@ import { ProjectProvider } from './context/ProjectContext'
 import { TaskProvider } from './context/TaskContext'
 import { TeamProvider } from './context/TeamContext'
 import CalendarPage from './pages/dashboard/CalendarPage'
+import Settings from './pages/dashboard/Settings'
+import Help from './pages/dashboard/Help'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <ProjectProvider>
+        <TeamProvider>
         <TaskProvider>
-          <TeamProvider>
+          
       <BrowserRouter>
         <Routes>
           <Route path='/' element={<App />} />
@@ -43,13 +46,16 @@ createRoot(document.getElementById('root')).render(
             <Route path='projects' element={<ProjectPage />} /> {/* /dashboard/project */}
             <Route path='teams' element={<TeamPage />} />       {/* /dashboard/team */}
             <Route path='calendar' element={<CalendarPage />} /> 
+            <Route path='settings' element={<Settings />} /> 
+             <Route path='help' element={<Help />} /> 
           </Route>
 
           <Route path='*' element={<Navigate to='/' replace />} />
         </Routes>
       </BrowserRouter>
-      </TeamProvider>
+      
       </TaskProvider>
+      </TeamProvider>
       </ProjectProvider>
     </AuthProvider>
   </StrictMode>

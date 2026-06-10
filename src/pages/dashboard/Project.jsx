@@ -130,7 +130,7 @@ export default function ProjectPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 rounded-xl bg-neutral-50 p-6 md:p-8">
       {/* ── Page Header ───────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
@@ -143,7 +143,7 @@ export default function ProjectPage() {
         {/* Create Project Dialog */}
         <Dialog open={createOpen} onOpenChange={setCreateOpen} className={""}>
           <DialogTrigger asChild>
-            <Button className="gap-2 cursor-pointer capitalize bg-linear-to-b from-[#14532d] to-[#064e3b] ">
+            <Button className="gap-2 cursor-pointer capitalize bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full ">
               <Plus size={16} />
               New Project
             </Button>
@@ -211,10 +211,10 @@ export default function ProjectPage() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateOpen(false)} className="cursor-pointer capitalize">
+              <Button variant="outline" onClick={() => setCreateOpen(false)} className="cursor-pointer capitalize rounded-full" >
                 Cancel
               </Button>
-              <Button onClick={handleCreate} className="cursor-pointer capitalize bg-linear-to-b from-[#14532d] to-[#064e3b] " >Create Project</Button>
+              <Button onClick={handleCreate} className="cursor-pointer capitalize bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full" >Create Project</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -235,7 +235,7 @@ export default function ProjectPage() {
           </div>
           <Button
             size="sm"
-            className="gap-2 cursor-pointer capitalize bg-linear-to-b from-[#14532d] to-[#064e3b] "
+            className="gap-2 cursor-pointer capitalize bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full font-normal"
             onClick={() => setCreateOpen(true)}
           >
             <Plus size={14} />
@@ -390,10 +390,10 @@ export default function ProjectPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>
+            <Button variant="outline" onClick={() => setEditOpen(false)} className={"rounded-full"}>
               Cancel
             </Button>
-            <Button onClick={handleEdit} className={"capitalize"}>Save Changes</Button>
+            <Button onClick={handleEdit} className={"capitalize bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full"}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
