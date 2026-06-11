@@ -293,7 +293,7 @@ export default function HelpPage() {
                       <div className="flex items-center gap-3 text-left">
                         <div
                           className={cn(
-                            "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                            "h-8 w-8 rounded-full flex items-center justify-center shrink-0 transition-colors",
                             "bg-[#22C55E]/10 text-[#16A34A] group-data-[state=open]:bg-[#22C55E] group-data-[state=open]:text-white"
                           )}
                         >

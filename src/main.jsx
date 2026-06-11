@@ -15,6 +15,8 @@ import ProtectedRoute from './components/ProtectedRoute'
 import { ProjectProvider } from './context/ProjectContext'
 import { TaskProvider } from './context/TaskContext'
 import { TeamProvider } from './context/TeamContext'
+import { EmailProvider } from './context/EmailContext'
+import { NotificationProvider } from './context/NotificationContext'
 import CalendarPage from './pages/dashboard/CalendarPage'
 import Settings from './pages/dashboard/Settings'
 import Help from './pages/dashboard/Help'
@@ -25,7 +27,8 @@ createRoot(document.getElementById('root')).render(
       <ProjectProvider>
         <TeamProvider>
         <TaskProvider>
-          
+          <NotificationProvider>
+            <EmailProvider>          
       <BrowserRouter>
         <Routes>
           <Route path='/' element={<App />} />
@@ -53,7 +56,8 @@ createRoot(document.getElementById('root')).render(
           <Route path='*' element={<Navigate to='/' replace />} />
         </Routes>
       </BrowserRouter>
-      
+      </EmailProvider>
+      </NotificationProvider>
       </TaskProvider>
       </TeamProvider>
       </ProjectProvider>

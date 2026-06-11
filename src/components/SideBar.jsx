@@ -12,10 +12,11 @@ import {
     ChevronRight,
     FolderKanban,
 
-    ListTodo
+    ListTodo,
+    DownloadCloud
 } from "lucide-react";
 import { Button } from "./ui/button";
-import { CardContent, CardHeader, CardTitle, Card} from "./ui/card";
+import { CardContent, CardHeader, CardTitle, Card } from "./ui/card";
 
 const LinkMenu = [
     { id: 1, title: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={20} /> },
@@ -95,32 +96,7 @@ export default function SideBar() {
 
             {/* General Utilities */}
             <div className="flex flex-col gap-2 ">
-                <Card className="w-full max-w-xs overflow-hidden bg-black bg-[radial-gradient(circle_at_right_top,#15803d_0%,transparent_60%),radial-gradient(circle_at_right_bottom,#22c55e_10%,#022c22_60%,#000_100%)] p-5 text-white rounded-3xl border-none shadow-none">
-                    <CardHeader className="p-0 space-y-1">
 
-                        {/* Top Floating Badge Icon matching the screenshot */}
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 backdrop-blur-md mb-2 border border-white/10">
-                            <div className="h-2.5 w-2.5 rounded-full border-2 border-green-400 bg-transparent" />
-                        </div>
-
-                        {/* Heading Stack */}
-                        <CardTitle className="text-xl font-extrabold tracking-tight leading-6">
-                            Download our <br />
-                            Mobile App
-                        </CardTitle>
-
-                        {/* Subtitle description */}
-                        <p className="text-[11px] font-medium tracking-wide text-zinc-300 pt-0.5">
-                            Get easy in another way
-                        </p>
-                    </CardHeader>
-
-                    {/* Kept as empty spacer structure to match your template format */}
-                    <CardContent className="p-0 h-fit " />
-                    <Button className={"bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full text-white"} variant="ghost" >
-                        Download
-                    </Button>
-                </Card>
                 {General.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
@@ -149,6 +125,64 @@ export default function SideBar() {
                         </Link>
                     );
                 })}
+                <Card className={`w-full max-w-xs overflow-hidden bg-black bg-[radial-gradient(circle_at_right_top,#15803d_0%,transparent_60%),radial-gradient(circle_at_right_bottom,#22c55e_10%,#022c22_60%,#000_100%)] p-5 text-white rounded-3xl border-none shadow-none
+                  ${isCollapsed ? "w-15 justify-center items-center" : "w-full"
+                    }
+                    `}>
+                    <CardHeader className="p-0 space-y-1">
+
+                        {/* Top Floating Badge Icon matching the screenshot */}
+                        
+                           
+                                {/* <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 backdrop-blur-md mb-2 border border-white/10">
+                                    <div className="h-2.5 w-2.5 rounded-full border-2 border-green-400 bg-transparent" />
+                                </div> */}
+                         
+
+
+                        {/* Heading Stack */}
+                        {
+                            !isCollapsed && (
+                                <CardTitle className="text-xl font-extrabold tracking-tight leading-6">
+                                    Download our <br />
+                                    Mobile App
+                                </CardTitle>
+                            )
+                        }
+
+                        {/* Subtitle description */}
+                        {
+                            !isCollapsed && (
+                                <p className="text-[11px] font-medium tracking-wide text-zinc-300 pt-0.5">
+                                    Get easy in another way
+                                </p>
+                            )
+                        }
+
+
+
+                    </CardHeader>
+
+                    {/* Kept as empty spacer structure to match your template format */}
+                    <CardContent className="p-0 h-fit " >
+                        {
+                            isCollapsed ? (
+                                <button
+                                    className="bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full text-white w-fit p-2 cursor-pointer hover:scale-90 duration-100"
+                                >
+                                    <DownloadCloud size={20} />
+
+                                </button>
+                            ) : (
+                                <Button className={" border-none bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full text-white"} variant="ghost" >
+                                  Download
+
+                                </Button>
+                            )
+                        }
+
+                    </CardContent>
+                </Card>
             </div>
         </aside>
     );

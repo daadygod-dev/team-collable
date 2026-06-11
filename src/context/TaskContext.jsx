@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./AuthContext";
 import { useProjects } from "./ProjectContext";
-import { useTeams } from "./TeamContext"; // ✅ ADDED: Import Teams
+import { useTeams } from "./TeamContext";
 
 const TaskContext = createContext();
 
@@ -20,7 +20,7 @@ function safeGetFromStorage(key, defaultValue = []) {
 export function TaskProvider({ children }) {
   const { user } = useAuth();
   const { getProjectById, getMemberRole, getMyProjects } = useProjects();
-  const { getTeamMembers } = useTeams(); // ✅ ADDED: Get team members function
+  const { getTeamMembers, teams } = useTeams(); // ← destructure teams so deps stay live
 
   const [tasks, setTasks] = useState(() =>
     safeGetFromStorage("tasks_db", [])
@@ -41,19 +41,17 @@ export function TaskProvider({ children }) {
     }
   }, [tasks]);
 
-  // ✅ NEW: Smart helper to always get the correct member list
-  const getContextMembers = (project) => {
+  /**
+   * Always resolves the correct member list for a project.
+   * Priority: live team members → project.members fallback.
+   * Called inline (not memoized) so it always reads the latest closure values.
+   */
+  const resolveMembers = (project) => {
     if (!project) return [];
-    
-    // If project belongs to a team, pull members directly from the team
     if (project.teamId) {
       const teamMembers = getTeamMembers(project.teamId);
-      if (teamMembers && teamMembers.length > 0) {
-        return teamMembers;
-      }
+      if (teamMembers && teamMembers.length > 0) return teamMembers;
     }
-    
-    // Fallback to project members if no team is linked
     return project.members || [];
   };
 
@@ -74,12 +72,9 @@ export function TaskProvider({ children }) {
     const project = getProjectById(projectId);
     if (!project) throw new Error("Project not found.");
 
-    // ✅ FIXED: Use smart helper instead of project.members
-    const activeMembers = getContextMembers(project);
+    const activeMembers = resolveMembers(project);
 
-    const currentUserMember = activeMembers.find(
-      (m) => m.userId === user.id
-    );
+    const currentUserMember = activeMembers.find((m) => m.userId === user.id);
     if (!currentUserMember)
       throw new Error("You are not a member of this project.");
 
@@ -147,17 +142,12 @@ export function TaskProvider({ children }) {
 
       if (updates.assignedToUserId) {
         const project = getProjectById(task.projectId);
-        
-        // ✅ FIXED: Use smart helper for reassignment validation
-        const activeMembers = getContextMembers(project);
+        const activeMembers = resolveMembers(project);
         const newAssignee = activeMembers.find(
           (m) => m.userId === updates.assignedToUserId
         );
-        
         if (!newAssignee)
-          throw new Error(
-            "Selected user is not a member of this project."
-          );
+          throw new Error("Selected user is not a member of this project.");
         resolvedUpdates.assignedTo = {
           userId: newAssignee.userId,
           fullname: newAssignee.fullname,
@@ -222,9 +212,7 @@ export function TaskProvider({ children }) {
 
   const getTasksByStatus = useCallback(
     (projectId, status) =>
-      tasks.filter(
-        (t) => t.projectId === projectId && t.status === status
-      ),
+      tasks.filter((t) => t.projectId === projectId && t.status === status),
     [tasks]
   );
 
@@ -233,13 +221,16 @@ export function TaskProvider({ children }) {
     [getMyProjects]
   );
 
-  // ✅ FIXED: Dropdown now uses the smart helper
+  /**
+   * Returns the full member list for a project's assign dropdown.
+   * Re-evaluates whenever teams state changes so new invites appear immediately.
+   */
   const getAssignableMembers = useCallback(
     (projectId) => {
       const project = getProjectById(projectId);
       if (!project) return [];
-      
-      const activeMembers = getContextMembers(project);
+
+      const activeMembers = resolveMembers(project);
 
       return activeMembers.map(({ userId, fullname, email, role }) => ({
         userId,
@@ -248,7 +239,8 @@ export function TaskProvider({ children }) {
         role,
       }));
     },
-    [getProjectById, getTeamMembers] // ✅ ADDED getTeamMembers to dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getProjectById, getTeamMembers, teams] // teams in deps = re-run when any member is added/removed
   );
 
   return (

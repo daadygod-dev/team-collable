@@ -37,7 +37,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/50 duration-100  data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/50 duration-100 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props} />
@@ -56,7 +56,19 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-2xl bg-popover p-6 text-sm text-popover-foreground shadow--none ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          // Shared base
+          "fixed z-50 grid w-full gap-6 bg-popover p-6 text-sm text-popover-foreground shadow-none ring-1 ring-foreground/10 duration-200 outline-none",
+          // Mobile: bottom sheet — slides up from bottom, rounded top corners
+          "bottom-0 left-0 right-0 max-h-[90dvh] overflow-y-auto rounded-t-2xl",
+          "data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-bottom-full",
+          "data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-bottom-full",
+          // sm+: centered dialog — overrides mobile sheet positioning back to original
+          "sm:inset-auto sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:right-auto",
+          "sm:-translate-x-1/2 sm:-translate-y-1/2",
+          "sm:max-w-[calc(100%-2rem)] sm:w-full sm:max-w-md",
+          "sm:max-h-none sm:overflow-y-visible sm:rounded-2xl",
+          "sm:data-open:zoom-in-95 sm:data-closed:zoom-out-95",
+          "sm:data-open:slide-in-from-bottom-0 sm:data-closed:slide-out-to-bottom-0",
           className
         )}
         {...props}>
@@ -118,7 +130,7 @@ function DialogTitle({
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        " text-lg leading-none font-semibold tracking-wider uppercase",
+        "text-lg leading-none font-semibold tracking-wider uppercase",
         className
       )}
       {...props} />

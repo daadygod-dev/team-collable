@@ -4,6 +4,10 @@ import { ArrowUpRight, CloudDownload, Plus, Triangle, TriangleAlert, Video, X, U
 
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, PieChart, Label, Pie } from "recharts"
 import {
+    useNavigate
+
+} from "react-router-dom"
+import {
     Card,
     CardContent,
     CardDescription,
@@ -32,6 +36,9 @@ export default function DashboardHome() {
     const { tasks } = useTasks()
     const { teams } = useTeams()
     const { projects } = useProjects()
+
+    //__Navigate________________
+    const navigate = useNavigate();
 
     // ── Import modal state ──────────────────────────────
     const [importOpen, setImportOpen] = useState(false)
@@ -163,7 +170,7 @@ export default function DashboardHome() {
 
     return (
         <>
-            <div className="flex flex-col gap-4 bg-neutral-50 rounded-xl p-4">
+            <div className="flex flex-col gap-4 bg-neutral-50 rounded-xl p-0 md:p-4 mb-8">
                 {/* Header section */}
                 <div className="flex flex-col sm:flex-row justify-between gap-4 p-4 min-h-20">
                     <div>
@@ -172,7 +179,9 @@ export default function DashboardHome() {
                     </div>
 
                     <div className="flex gap-2 justify-center items-center">
-                        <Button className="flex gap-1 justify-center items-center rounded-full bg-gradient-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] cursor-pointer capitalize text-white hover:opacity-90">
+                        <Button className="flex gap-1 justify-center items-center rounded-full bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] cursor-pointer capitalize text-white hover:opacity-90"
+                            onClick={() => navigate("/dashboard/projects")}
+                        >
                             <Plus size={18} /> add project
                         </Button>
                         <Button
@@ -192,7 +201,9 @@ export default function DashboardHome() {
                         return (
                             <div
                                 key={card.id}
-                                className="group flex flex-col justify-between p-5 rounded-2xl h-40 border border-none bg-white hover:bg-linear-to-br hover:from-[#22C55E] hover:via-[#16A34A] hover:to-[#14532D] hover:border-transparent cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
+                                className="group flex flex-col justify-between p-5 rounded-2xl h-40 border border-none bg-white hover:bg-linear-to-br hover:from-[#22C55E] hover:via-[#16A34A] hover:to-[#14532D] hover:border-transparent focus:bg-linear-to-br focus:from-[#22C55E] focus:via-[#16A34A] focus:to-[#14532D]
+
+                                cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
                             >
                                 <div className="flex justify-between items-start w-full">
                                     <h3 className="font-medium text-neutral-500 group-hover:text-white/90 text-sm transition-colors">
@@ -242,7 +253,8 @@ export default function DashboardHome() {
                                 <div className="w-1.5 h-1.5 bg-green-400 rounded-full -mt-0.5" />
                             </div>
 
-                            <div className="h-32 w-full mt-4">
+                            {/* Bar chart */}
+                            <div className="h-32 w-full mt-4 min-h-0">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={weeklyAnalyticsData} margin={{ top: 10, bottom: 5, left: 5, right: 5 }} barSize={26}>
                                         <XAxis
@@ -269,7 +281,7 @@ export default function DashboardHome() {
                     <Card className="w-full border border-none shadow-none rounded-3xl p-2 bg-white">
                         <CardHeader className="pt-4">
                             <CardTitle className="text-xl font-bold text-neutral-800 tracking-tight flex gap-1.5">
-                                Remainders
+                                Reminders
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="flex flex-col gap-3">
@@ -281,7 +293,8 @@ export default function DashboardHome() {
                                     Meeting at:
                                     <span> 16:00 PM</span>
                                 </p>
-                                <Button className="flex gap-1.5 rounded-full bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] w-fit">
+                                <Button className="flex gap-1.5 border-none
+                                 rounded-full bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] w-fit">
                                     <Video size={20} />
                                     Start meeting
                                 </Button>
@@ -296,7 +309,8 @@ export default function DashboardHome() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0 flex flex-col gap-2">
-                            <div className="relative h-16 w-full flex items-center justify-center overflow-hidden">
+                            {/* Pie chart — removed overflow-hidden, added min-h-[64px] */}
+                            <div className="relative h-16 w-full flex items-center justify-center min-h-[64px]">
                                 <svg className="absolute w-0 h-0">
                                     <defs>
                                         <pattern id="legendStripes" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -363,19 +377,17 @@ export default function DashboardHome() {
                 <div className="fixed inset-0 z-50">
                     {/* Backdrop */}
                     <div
-                        className={`absolute inset-0 bg-black/40 transition-opacity duration-400 ${
-                            isAnimating && !isClosing ? "opacity-100" : "opacity-0"
-                        }`}
+                        className={`absolute inset-0 bg-black/40 transition-opacity duration-400 ${isAnimating && !isClosing ? "opacity-100" : "opacity-0"
+                            }`}
                         onClick={closeImport}
                     />
 
                     {/* Panel — slides up from bottom */}
                     <div
-                        className={`absolute inset-x-0 bottom-0 top-[8%] bg-white rounded-t-3xl flex flex-col transition-all duration-400 ease-out ${
-                            isAnimating && !isClosing
-                                ? "translate-y-0 opacity-100"
-                                : "translate-y-full opacity-0"
-                        }`}
+                        className={`absolute inset-x-0 bottom-0 top-[8%] bg-white rounded-t-3xl flex flex-col transition-all duration-400 ease-out ${isAnimating && !isClosing
+                            ? "translate-y-0 opacity-100"
+                            : "translate-y-full opacity-0"
+                            }`}
                     >
                         {/* Drag handle bar */}
                         <div className="flex justify-center pt-3 pb-1 shrink-0">
@@ -425,23 +437,20 @@ export default function DashboardHome() {
                                                     <button
                                                         key={fmt.id}
                                                         onClick={() => setSelectedFormat(fmt.id)}
-                                                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                                                            isSelected
-                                                                ? "border-[#22C55E] bg-green-50/50"
-                                                                : "border-neutral-200 bg-white hover:border-neutral-300"
-                                                        }`}
+                                                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer ${isSelected
+                                                            ? "border-[#22C55E] bg-green-50/50"
+                                                            : "border-neutral-200 bg-white hover:border-neutral-300"
+                                                            }`}
                                                     >
                                                         <div
-                                                            className={`h-10 w-10 rounded-xl flex items-center justify-center border ${
-                                                                isSelected ? fmt.color : "bg-neutral-50 border-neutral-200 text-neutral-500"
-                                                            }`}
+                                                            className={`h-10 w-10 rounded-xl flex items-center justify-center border ${isSelected ? fmt.color : "bg-neutral-50 border-neutral-200 text-neutral-500"
+                                                                }`}
                                                         >
                                                             <FmtIcon size={20} />
                                                         </div>
                                                         <span
-                                                            className={`text-sm font-semibold ${
-                                                                isSelected ? "text-neutral-800" : "text-neutral-500"
-                                                            }`}
+                                                            className={`text-sm font-semibold ${isSelected ? "text-neutral-800" : "text-neutral-500"
+                                                                }`}
                                                         >
                                                             {fmt.name}
                                                         </span>
@@ -460,11 +469,10 @@ export default function DashboardHome() {
                                             Upload file
                                         </h3>
                                         <div
-                                            className={`relative flex flex-col items-center justify-center gap-3 p-10 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${
-                                                dragOver
-                                                    ? "border-[#22C55E] bg-green-50/50"
-                                                    : "border-neutral-200 bg-neutral-50/50 hover:border-neutral-300 hover:bg-neutral-50"
-                                            }`}
+                                            className={`relative flex flex-col items-center justify-center gap-3 p-10 rounded-2xl border-2 border-dashed transition-all cursor-pointer ${dragOver
+                                                ? "border-[#22C55E] bg-green-50/50"
+                                                : "border-neutral-200 bg-neutral-50/50 hover:border-neutral-300 hover:bg-neutral-50"
+                                                }`}
                                             onDragOver={(e) => {
                                                 e.preventDefault()
                                                 setDragOver(true)
@@ -570,26 +578,24 @@ export default function DashboardHome() {
                                                             <td className="px-4 py-2.5 text-neutral-700">{row.title}</td>
                                                             <td className="px-4 py-2.5">
                                                                 <span
-                                                                    className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                                                                        row.status === "Done"
-                                                                            ? "bg-emerald-50 text-emerald-600"
-                                                                            : row.status === "In Progress"
+                                                                    className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${row.status === "Done"
+                                                                        ? "bg-emerald-50 text-emerald-600"
+                                                                        : row.status === "In Progress"
                                                                             ? "bg-amber-50 text-amber-600"
                                                                             : "bg-slate-100 text-slate-600"
-                                                                    }`}
+                                                                        }`}
                                                                 >
                                                                     {row.status}
                                                                 </span>
                                                             </td>
                                                             <td className="px-4 py-2.5">
                                                                 <span
-                                                                    className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                                                                        row.priority === "High"
-                                                                            ? "bg-red-50 text-red-600"
-                                                                            : row.priority === "Medium"
+                                                                    className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium ${row.priority === "High"
+                                                                        ? "bg-red-50 text-red-600"
+                                                                        : row.priority === "Medium"
                                                                             ? "bg-amber-50 text-amber-600"
                                                                             : "bg-blue-50 text-blue-600"
-                                                                    }`}
+                                                                        }`}
                                                                 >
                                                                     {row.priority}
                                                                 </span>

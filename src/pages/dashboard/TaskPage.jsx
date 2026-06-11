@@ -322,7 +322,7 @@ export default function TaskPage() {
   // ── Tab style helper ──────────────────────────────────
   const tabClass = (isActive) =>
     cn(
-      "px-4 py-2 text-sm font-medium rounded-lg transition-all cursor-pointer select-none",
+      "px-4 py-2 text-xs md:text-sm font-medium rounded-lg transition-all cursor-pointer select-none",
       isActive
         ? "bg-[#22C55E]/10 text-[#16A34A]"
         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -330,7 +330,7 @@ export default function TaskPage() {
 
   // ── Render ────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8 rounded-xl bg-neutral-50">
+    <div className="flex flex-col gap-6 p-6 md:p-8 rounded-xl bg-neutral-50  mb-6">
       {/* ── Page header ───────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -341,7 +341,7 @@ export default function TaskPage() {
         </div>
 
         <Button
-          className="gap-2 bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full shadow-none transition-shadow"
+          className="gap-2 bg-linear-to-br border-none from-[#22C55E] via-[#16A34A] to-[#14532D] rounded-full shadow-none transition-shadow"
           onClick={openCreate}
         >
           <Plus size={16} />
@@ -356,7 +356,7 @@ export default function TaskPage() {
             {statusTabs.map((tab) => (
               <button
                 key={tab.value}
-                className={tabClass(activeTab === tab.value)}
+                className={tabClass(activeTab === tab.value) }
                 onClick={() => handleTabChange(tab.value)}
               >
                 {tab.label}

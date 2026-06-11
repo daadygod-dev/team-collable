@@ -81,12 +81,12 @@ export default function Navbar() {
           </div>
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 flex flex-col space-y-2">
               <RouterLink to="/signin" onClick={() => setIsOpen(false)}>
-            <Button variant="ghost" className="w-full justify-center">Sign In</Button>
+            <Button variant="ghost" className="w-full justify-center rounded-full">Sign In</Button>
             </RouterLink>
             
             {/* Safe standard client router routing redirect block */}
             <RouterLink to="/signup" onClick={() => setIsOpen(false)}>
-              <Button size="lg" className="h-12 w-full px-6 text-sm font-medium gap-2 bg-linear-to-r from-blue-600 via-indigo-500 to-purple-600 text-white border-0">
+              <Button size="lg" className="h-12 w-full px-6 text-sm font-medium gap-2 bg-linear-to-br from-[#22C55E] via-[#16A34A] to-[#14532D] text-white rounded-full">
                 Get Started Free
                 <ArrowRight className="h-4 w-4" />
               </Button>
